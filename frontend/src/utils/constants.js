@@ -3,7 +3,6 @@ import { BsCircle } from "react-icons/bs";
 import { BsSquare } from "react-icons/bs";
 import { BsDiamond } from "react-icons/bs";
 import { BsArrowUpLeft } from "react-icons/bs";
-import { BiSolidEraser } from "react-icons/bi";
 import { BsEraser } from "react-icons/bs";
 import { BsSlashLg } from "react-icons/bs";
 import { IoIosUndo } from "react-icons/io";
@@ -100,3 +99,15 @@ export const FILL_STYLES = {
   ZIGZAGLINE: 'zigzag-line',
 };
 
+ export const easingOptions = [
+    "EaseInOutCubic",
+    "Linear",
+    "EaseInQuad",
+    "EaseOutQuad",
+    "EaseInOutQuad",
+    "EaseInCubic",
+    "EaseOutCubic",
+    "EaseInQuart",
+    "EaseOutQuart",
+    "EaseInOutQuart",
+  ];

@@ -10,20 +10,20 @@ import { createTool } from "../../utils/helpers.jsx";
 const BoardReducer = (state, action) => {
   const generator = rough.generator();
   const { elements, activeTool } = state;
-  console.log("meowww", state, action.payload);
   switch (action.type) {
     // Define reducer cases if needed in the future
     case ALLOWED_METHODS.DRAW_DOWN: {
       switch (state.activeTool) {
         case TOOLS.PENCIL: {
-          const { points, color, strokeWidth } = action.payload;
+          const { points, color, strokeWidth, thinning, smoothing, streamline } = action.payload;
+          console.log("DRAW_DOWN action payload:", action.payload);
           const activeToolId = activeTool?.id;  
           const newElement = {
             type: activeToolId,
             points: points,
             color: color,
             strokeWidth: strokeWidth,
-            roughElement: createTool(activeToolId, 0, 0, 0, 0, color, points, strokeWidth,null,null),
+            roughElement: createTool(activeToolId, 0, 0, 0, 0, color, points, strokeWidth, null, null, thinning, smoothing, streamline),
           };
           return {
             ...state,
@@ -41,14 +41,7 @@ const BoardReducer = (state, action) => {
           const { x1, y1, color, strokeWidth, fill, fillStyle } =
             action.payload;
           const activeToolId = activeTool?.id;
-          console.log("Active Tool ID on DRAW_DOWN:", {
-            x1,
-            y1,
-            color,
-            strokeWidth,
-            fill,
-            fillStyle,
-          });
+          
           const newElement = {
             type: activeToolId,
             x1: x1,
@@ -102,11 +95,13 @@ const BoardReducer = (state, action) => {
               newPoints,
               elements[index]?.strokeWidth,
               elements[index]?.fill,
-              elements[index]?.fillStyle
+              elements[index]?.fillStyle,
+              elements[index]?.thinning,
+              elements[index]?.smoothing,
+              elements[index]?.streamline
             ),
           };
           const updatedElements = [...elements];
-          console.log("PENCIL DRAW_MOVE:", updatedElement);
           updatedElements[index] = updatedElement;
           return { ...state, elements: updatedElements };
         }
@@ -117,12 +112,7 @@ const BoardReducer = (state, action) => {
         case TOOLS.ARROW: {
           const { x2, y2 } = action.payload;
           const index = elements.length - 1;
-          console.log(
-            "Active Tool ID on DRAW_MOVE:",
-            elements[index]?.fill,
-            elements[index]?.fillStyle
-          );
-          console.log("DRAW_MOVE asdfasdf:", elements[index]);
+         
           const activeToolId = activeTool?.id;
           const updatedElement = {
             ...elements[index],

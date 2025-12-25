@@ -2,8 +2,7 @@ import React,{useReducer} from "react";
 import toolboxContext from "./toolbar-context";
 import { COLORS, FILL_STYLES, TOOL_ACTION_TYPE, TOOLS } from "../../utils/constants";
 function toolboxReducer(state, action){
-    console.log('Toolbox Reducer Action:', action); 
-    
+       
     switch(action.type){
         case 'SET_STROKE_COLOR':
             return {
@@ -22,6 +21,7 @@ function toolboxReducer(state, action){
                 },
             };
         case 'SET_STROKE_WIDTH':
+            console.log("Reducer - Setting stroke width:",state,action);
             return {
                 ...state,
                 [action.tool.name]: {
@@ -37,6 +37,14 @@ function toolboxReducer(state, action){
                     fillStyle: action.fillStyle,
                 },
             };
+        case 'SET_PENCIL_PROP':
+            return {
+                ...state,
+                [action.tool.name]: {
+                    ...state[action.tool.name],
+                    [action.prop]: action.value,
+                },
+            };
         default:
             return state;
     }
@@ -45,7 +53,11 @@ function toolboxReducer(state, action){
 const initialToolBoxState={
     [TOOLS.PENCIL.name]: {
         stroke: COLORS.Black,
-        size: 1
+        size: 2,
+        thinning: 0.5,
+        streamline: 0.5,
+        smoothing: 0.5,
+        easing: 'EaseInOutCubic',
     },
     [TOOLS.CIRCLE.name]: {
         stroke: COLORS.Black,

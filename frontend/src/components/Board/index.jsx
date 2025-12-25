@@ -13,7 +13,6 @@ const Board = () => {
     ALLOWED_METHODS,
   } = React.useContext(BoardContext);
   const { toolBoxState } = React.useContext(toolboxContext);
-  console.log("Board Rendered with elements:", toolBoxState);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -31,14 +30,12 @@ const Board = () => {
 
     elements.forEach((element) => {
       if (element.type === TOOLS.PENCIL.id) {
-        console.log("Drawing pencil element:", element);
         const drawingPath = element.roughElement;
         const myPath = new Path2D(drawingPath);
         context.fill(myPath);
         context.restore();
         return;
       } else {
-        console.log("Drawing element:", element);
         rc.draw(element.roughElement);
       }
     });
@@ -56,6 +53,11 @@ const Board = () => {
         newElement = {
           type: activeTool,
           points: [[event.pageX, event.pageY, event.pressure || 0.5]],
+          strokeWidth: toolBoxState[activeTool.name].size,
+          color: toolBoxState[activeTool.name].stroke,
+          thinning: toolBoxState[activeTool.name].thinning,
+          smoothing: toolBoxState[activeTool.name].smoothing,
+          streamline: toolBoxState[activeTool.name].streamline,
         };
         dispatchBoardAction({
           type: ALLOWED_METHODS.DRAW_DOWN,
@@ -86,16 +88,10 @@ const Board = () => {
       default:
         break;
     }
-    console.log("Mouse Down New Element:", newElement);
   };
 
   const handleMouseMove = (event) => {
     if (ToolActionType == TOOL_ACTION_TYPE.DRAW) {
-      console.log("Mouse Move Event:", {
-        fill: toolBoxState[activeTool.name]?.fillcolor,
-        fillStyle: toolBoxState[activeTool.name]?.fillStyle,
-      });
-
       const { clientX, clientY } = event;
       switch (activeTool) {
         case TOOLS.PENCIL: {
