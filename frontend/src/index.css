@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@layer components {
+  .toolbar {
+    @apply absolute top-0 z-50 flex justify-center items-center left-[calc(50vw-(15vw/2))]  py-2;
+  }
+  .toolbar-buttons {
+    @apply shadow-xl py-2 rounded-xl w-[15vw] bg-white flex justify-between items-center;
+  }
+  .toolbar-button {
+    @apply mx-1 px-3 py-3 rounded-xl  hover:bg-blue-100 transition-colors;
+  }
+  .toolbar-button-active {
+    @apply bg-blue-400 text-white;
+  }
+}
