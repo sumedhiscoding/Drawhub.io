@@ -8,6 +8,7 @@ import { BsEraser } from "react-icons/bs";
 import { BsSlashLg } from "react-icons/bs";
 import { IoIosUndo } from "react-icons/io";
 import { IoIosRedo } from "react-icons/io";
+
 export const TOOLS = {
   PENCIL: {
     id: "pencil",

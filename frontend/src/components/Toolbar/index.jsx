@@ -4,7 +4,6 @@ import { BoardContext } from "../../store/board/board-context";
 
 const Toolbar = () => {
   const { activeTool, setActiveTool } = React.useContext(BoardContext);
-
   return (
     <div className="toolbar">
       <div className="toolbar-buttons">
@@ -15,7 +14,7 @@ const Toolbar = () => {
             <button
               key={tool.id || idx}
               className={`toolbar-button${
-                activeTool === toolKey ? " toolbar-button-active" : ""
+                activeTool && activeTool.id === tool.id ? " toolbar-button-active" : ""
               }`}
               onClick={() => setActiveTool(toolKey)}
               title={tool.name}

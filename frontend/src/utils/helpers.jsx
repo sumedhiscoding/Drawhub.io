@@ -1,5 +1,6 @@
 import { TOOLS } from "./constants";
-
+import {getStroke} from "perfect-freehand";
+import rough from "roughjs";
 export const createTool = (
   id, // e.g., "line"
   x1,
@@ -7,11 +8,26 @@ export const createTool = (
   x2,
   y2,
   color,
+  points,
   strokeWidth,
-  generator,
   fill,
   fillStyle,
 ) => {
+  const generator = rough.generator();
+  
+  console.log("Props in createTool:", {
+    id,
+    x1,
+    y1,
+    x2,
+    y2,
+    color,
+    points,
+    strokeWidth,
+    fill,
+    fillStyle
+  });
+  
   switch (id) {
     case TOOLS.LINE.id:
       return generator.line(x1, y1, x2, y2, { stroke: color, strokeWidth });
@@ -80,7 +96,29 @@ export const createTool = (
         { stroke: color, strokeWidth }
       );
     }
+    case TOOLS.PENCIL.id:{
+      const stroke = getStroke(points);
+      const path = getSvgPathFromStroke(stroke);
+      return path;
+    }
     default:
       throw new Error(`Unknown tool type: ${id}`);
   }
 };
+
+
+export function getSvgPathFromStroke(stroke) {
+  if (!stroke.length) return ""
+
+  const d = stroke.reduce(
+    (acc, [x0, y0], i, arr) => {
+      const [x1, y1] = arr[(i + 1) % arr.length]
+      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2)
+      return acc
+    },
+    ["M", ...stroke[0], "Q"]
+  )
+
+  d.push("Z")
+  return d.join(" ")
+}
