@@ -5,10 +5,8 @@ import {
   TOOL_ACTION_TYPE,
   TOOLS,
 } from "../../utils/constants";
-import rough from "roughjs";
 import { createTool, isPointNearElement } from "../../utils/helpers.jsx";
 const BoardReducer = (state, action) => {
-  const generator = rough.generator();
   const { elements, activeTool } = state;
   switch (action.type) {
     // Define reducer cases if needed in the future
@@ -200,24 +198,21 @@ const BoardReducer = (state, action) => {
     }
     case ALLOWED_METHODS.ADD_TEXT: {
       const { x1, y1, text, fontSize, color } = action.payload;
-      const index = elements.length - 1 > 0 ? elements.length - 1 : 0;
+      console.log("ADD_TEXT action payload received:", action.payload);
       const updatedElement = {
         type: activeTool.id,
-        ...elements[index],
         left: x1,
         top: y1,
         text: text,
         fontSize: fontSize,
         color: color,
       };
-      const updatedElements = [...elements];
-      updatedElements[index] = updatedElement;
-      console.log("ADD_TEXT action payload:", updatedElements);
-
+      console.log("Updated element with text:", updatedElement);
+      const updatedElements = [...elements, updatedElement];
       return {
         ...state,
         ToolActionType: TOOL_ACTION_TYPE.WRITE,
-        elements: [...elements, updatedElement],
+        elements: updatedElements,
       };
     }
     case ALLOWED_METHODS.SAVE_TEXT: {
@@ -240,39 +235,39 @@ const BoardReducer = (state, action) => {
       };
     }
     case ALLOWED_METHODS.UNDO: {
-  if (state.index === 0) return state;
-  const newIndex = state.index - 1;
-  return {
-    ...state,
-    index: newIndex,
-    elements: state.history[newIndex] || [],
-  };
-}
+      if (state.index === 0) return state;
+      const newIndex = state.index - 1;
+      return {
+        ...state,
+        index: newIndex,
+        elements: state.history[newIndex] || [],
+      };
+    }
     case ALLOWED_METHODS.REDO: {
-  if (state.index >= state.history.length - 1) return state;
-  const newIndex = state.index + 1;
-  return {
-    ...state,
-    index: newIndex,
-    elements: state.history[newIndex] || [],
-  };
-}
+      if (state.index >= state.history.length - 1) return state;
+      const newIndex = state.index + 1;
+      return {
+        ...state,
+        index: newIndex,
+        elements: state.history[newIndex] || [],
+      };
+    }
     default:
       return state;
   }
 };
 
-const initialBoardState = {
-  elements: [],
-  activeTool: TOOLS.LINE,
-  history: [[]],
-  index: 0,
-  color: "black",
-  strokeWidth: 1,
-  ToolActionType: TOOL_ACTION_TYPE.NONE,
-};
 
 const BoardProvider = ({ children }) => {
+  const initialBoardState = {
+    elements: [],
+    activeTool: TOOLS.LINE,
+    history: [[]],
+    index: 0,
+    color: "black",
+    strokeWidth: 1,
+    ToolActionType: TOOL_ACTION_TYPE.NONE,
+  };
   const [BoardState, dispatchBoardAction] = React.useReducer(
     BoardReducer,
     initialBoardState

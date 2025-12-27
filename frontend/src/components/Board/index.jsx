@@ -19,12 +19,18 @@ const Board = () => {
   const { toolBoxState } = React.useContext(toolboxContext);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    canvas.style.backgroundColor = "#fdf8f6";
-    return () => {};
-  }, []);
+  const canvas = canvasRef.current;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.style.height = `${window.innerHeight}px`;
+  const context = canvas.getContext("2d");
+  context.setTransform(1, 0, 0, 1, 0, 0); // Reset any existing transforms
+  context.scale(dpr, dpr); // Scale for high-DPI
+  canvas.style.backgroundColor = "#fdfdfd";
+  return () => {};
+}, []);
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
