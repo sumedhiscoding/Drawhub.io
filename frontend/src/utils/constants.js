@@ -76,6 +76,8 @@ export const ALLOWED_METHODS = {
   ERASE_ELEMENT: "ERASE_ELEMENT",
   ADD_TEXT: "ADD_TEXT",
   SAVE_TEXT: "SAVE_TEXT",
+  UNDO: "UNDO",
+  REDO: "REDO",
 };
 
 export const TOOL_ACTION_TYPE = {

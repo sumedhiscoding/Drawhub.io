@@ -22,7 +22,7 @@ const Board = () => {
     const canvas = canvasRef.current;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    canvas.style.backgroundColor = "#FFFDD0";
+    canvas.style.backgroundColor = "#fdf8f6";
     return () => {};
   }, []);
 

@@ -90,8 +90,8 @@ const BoardReducer = (state, action) => {
           };
         }
         case TOOLS.ERASER: {
-          console.log("ehasdfasdf1")
-          return { ...state, ToolActionType: TOOL_ACTION_TYPE.ERASE};
+          console.log("ehasdfasdf1");
+          return { ...state, ToolActionType: TOOL_ACTION_TYPE.ERASE };
         }
         default:
           break;
@@ -101,7 +101,7 @@ const BoardReducer = (state, action) => {
       switch (state.activeTool) {
         case TOOLS.PENCIL: {
           const { points } = action.payload;
-          const index = elements.length - 1 > 0 ? elements.length -1 : 0;
+          const index = elements.length - 1 > 0 ? elements.length - 1 : 0;
           const activeToolId = activeTool?.id;
           // Flatten the points array
           const newPoints = [...elements[index].points, ...points];
@@ -134,7 +134,7 @@ const BoardReducer = (state, action) => {
         case TOOLS.DIAMOND:
         case TOOLS.ARROW: {
           const { x2, y2 } = action.payload;
-          const index = elements.length - 1 > 0 ? elements.length -1 : 0;
+          const index = elements.length - 1 > 0 ? elements.length - 1 : 0;
           const activeToolId = activeTool?.id;
           const updatedElement = {
             ...elements[index],
@@ -162,8 +162,13 @@ const BoardReducer = (state, action) => {
       }
     }
     case ALLOWED_METHODS.DRAW_UP: {
+      const elementsCopy = [...state.elements];
+      const newHistory = state.history.slice(0, state.index + 1);
+      newHistory.push(elementsCopy);
       return {
         ...state,
+        history: newHistory,
+        index: newHistory.length - 1,
         ToolActionType: TOOL_ACTION_TYPE.NONE,
       };
     }
@@ -184,55 +189,84 @@ const BoardReducer = (state, action) => {
       const filteredElements = elements.filter(
         (element) => !isPointNearElement(x1, y1, element)
       );
-      return { ...state, elements: filteredElements };
+      const newHistory = state.history.slice(0, state.index + 1);
+      newHistory.push(filteredElements);
+      return {
+        ...state,
+        history: newHistory,
+        index: newHistory.length - 1,
+        elements: filteredElements,
+      };
     }
-    case ALLOWED_METHODS.ADD_TEXT:{
-         const { x1, y1, text,fontSize,color } = action.payload;
-          const index = elements.length - 1 > 0 ? elements.length -1 : 0;
-          const updatedElement = {
-            type: activeTool.id,
-            ...elements[index],
-            left: x1,
-            top: y1,
-            text:text,
-            fontSize:fontSize,
-            color:color,
-          };
-          const updatedElements = [...elements];
-          updatedElements[index] = updatedElement;
-         console.log("ADD_TEXT action payload:", updatedElements);
+    case ALLOWED_METHODS.ADD_TEXT: {
+      const { x1, y1, text, fontSize, color } = action.payload;
+      const index = elements.length - 1 > 0 ? elements.length - 1 : 0;
+      const updatedElement = {
+        type: activeTool.id,
+        ...elements[index],
+        left: x1,
+        top: y1,
+        text: text,
+        fontSize: fontSize,
+        color: color,
+      };
+      const updatedElements = [...elements];
+      updatedElements[index] = updatedElement;
+      console.log("ADD_TEXT action payload:", updatedElements);
 
-         return {
-            ...state,
-            ToolActionType: TOOL_ACTION_TYPE.WRITE,
-            elements: [...elements, updatedElement],
-          };
-          
+      return {
+        ...state,
+        ToolActionType: TOOL_ACTION_TYPE.WRITE,
+        elements: [...elements, updatedElement],
+      };
     }
-    case ALLOWED_METHODS.SAVE_TEXT:{
-        const textValue = action.payload;
-        const index = elements.length - 1 > 0 ? elements.length -1 : 0;
-        const updatedElement = {
-          ...elements[index],
-          text: textValue,
-        };
-        const updatedElements = [...elements];
-        updatedElements[index] = updatedElement;
-        return {
-          ...state,
-          ToolActionType: TOOL_ACTION_TYPE.NONE,
-          elements: updatedElements,
-        };
+    case ALLOWED_METHODS.SAVE_TEXT: {
+      const textValue = action.payload;
+      const index = elements.length - 1 > 0 ? elements.length - 1 : 0;
+      const updatedElement = {
+        ...elements[index],
+        text: textValue,
+      };
+      const updatedElements = [...elements];
+      updatedElements[index] = updatedElement;
+      const newHistory = state.history.slice(0, state.index + 1);
+      newHistory.push(updatedElements);
+      return {
+        ...state,
+        history: newHistory,
+        index: newHistory.length - 1,
+        ToolActionType: TOOL_ACTION_TYPE.NONE,
+        elements: updatedElements,
+      };
     }
+    case ALLOWED_METHODS.UNDO: {
+  if (state.index === 0) return state;
+  const newIndex = state.index - 1;
+  return {
+    ...state,
+    index: newIndex,
+    elements: state.history[newIndex] || [],
+  };
+}
+    case ALLOWED_METHODS.REDO: {
+  if (state.index >= state.history.length - 1) return state;
+  const newIndex = state.index + 1;
+  return {
+    ...state,
+    index: newIndex,
+    elements: state.history[newIndex] || [],
+  };
+}
     default:
       return state;
   }
 };
 
 const initialBoardState = {
-  // Define initial state properties if needed in the future
   elements: [],
   activeTool: TOOLS.LINE,
+  history: [[]],
+  index: 0,
   color: "black",
   strokeWidth: 1,
   ToolActionType: TOOL_ACTION_TYPE.NONE,
@@ -252,6 +286,19 @@ const BoardProvider = ({ children }) => {
       },
     });
 
+  const boardUndoHandler = () => {
+    console.log("Undo handler called");
+    dispatchBoardAction({
+      type: ALLOWED_METHODS.UNDO,
+    });
+  };
+  const boardRedoHandler = () => {
+    console.log("Redo handler called");
+    dispatchBoardAction({
+      type: ALLOWED_METHODS.REDO,
+    });
+  };
+
   const boardContextValue = {
     elements: BoardState.elements,
     activeTool: BoardState.activeTool,
@@ -261,6 +308,8 @@ const BoardProvider = ({ children }) => {
     ALLOWED_METHODS,
     setActiveTool,
     ToolActionType: BoardState.ToolActionType,
+    boardUndoHandler,
+    boardRedoHandler,
   };
 
   return (

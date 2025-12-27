@@ -3,6 +3,8 @@ import { ALLOWED_METHODS } from "../../utils/constants";
 
 const BoardContext = createContext({
   elements: [],
+  history:[[]],
+  index:0,
   activeTool: "",
   color: "black",
   strokeWidth: 1,
@@ -10,6 +12,8 @@ const BoardContext = createContext({
   ALLOWED_METHODS: ALLOWED_METHODS,
   ToolActionType: "",
   setActiveTool: (tool) => {},
+  boardUndoHandler: () => {},
+  boardRedoHandler: () => {},
 });
 
 export { BoardContext };
