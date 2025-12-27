@@ -6,7 +6,7 @@ import {
   TOOLS,
 } from "../../utils/constants";
 import rough from "roughjs";
-import { createTool } from "../../utils/helpers.jsx";
+import { createTool, isPointNearElement } from "../../utils/helpers.jsx";
 const BoardReducer = (state, action) => {
   const generator = rough.generator();
   const { elements, activeTool } = state;
@@ -15,23 +15,42 @@ const BoardReducer = (state, action) => {
     case ALLOWED_METHODS.DRAW_DOWN: {
       switch (state.activeTool) {
         case TOOLS.PENCIL: {
-          const { points, color, strokeWidth, thinning, smoothing, streamline } = action.payload;
+          const {
+            points,
+            color,
+            strokeWidth,
+            thinning,
+            smoothing,
+            streamline,
+          } = action.payload;
           console.log("DRAW_DOWN action payload:", action.payload);
-          const activeToolId = activeTool?.id;  
+          const activeToolId = activeTool?.id;
           const newElement = {
             type: activeToolId,
             points: points,
             color: color,
             strokeWidth: strokeWidth,
-            roughElement: createTool(activeToolId, 0, 0, 0, 0, color, points, strokeWidth, null, null, thinning, smoothing, streamline),
+            roughElement: createTool(
+              activeToolId,
+              0,
+              0,
+              0,
+              0,
+              color,
+              points,
+              strokeWidth,
+              null,
+              null,
+              thinning,
+              smoothing,
+              streamline
+            ),
           };
           return {
             ...state,
             ToolActionType: TOOL_ACTION_TYPE.DRAW,
             elements: [...elements, newElement],
           };
-
-          break;
         }
         case TOOLS.LINE:
         case TOOLS.RECTANGLE:
@@ -41,7 +60,7 @@ const BoardReducer = (state, action) => {
           const { x1, y1, color, strokeWidth, fill, fillStyle } =
             action.payload;
           const activeToolId = activeTool?.id;
-          
+
           const newElement = {
             type: activeToolId,
             x1: x1,
@@ -69,6 +88,10 @@ const BoardReducer = (state, action) => {
             ToolActionType: TOOL_ACTION_TYPE.DRAW,
             elements: [...elements, newElement],
           };
+        }
+        case TOOLS.ERASER: {
+          console.log("ehasdfasdf1")
+          return { ...state, ToolActionType: TOOL_ACTION_TYPE.ERASE};
         }
         default:
           break;
@@ -112,7 +135,7 @@ const BoardReducer = (state, action) => {
         case TOOLS.ARROW: {
           const { x2, y2 } = action.payload;
           const index = elements.length - 1;
-         
+
           const activeToolId = activeTool?.id;
           const updatedElement = {
             ...elements[index],
@@ -153,6 +176,16 @@ const BoardReducer = (state, action) => {
     }
     case ALLOWED_METHODS.SET_STROKE_WIDTH: {
       return { ...state, strokeWidth: action.payload };
+    }
+    case ALLOWED_METHODS.CLEAR_BOARD: {
+      return { ...state, elements: [] };
+    }
+    case ALLOWED_METHODS.ERASE_ELEMENT: {
+      const { x1, y1 } = action.payload;
+      const filteredElements = elements.filter(
+        (element) => !isPointNearElement(x1, y1, element)
+      );
+      return { ...state, elements: filteredElements };
     }
 
     default:

@@ -1,4 +1,4 @@
-import { BsPencil } from "react-icons/bs";
+import { BsPencil,  } from "react-icons/bs";
 import { BsCircle } from "react-icons/bs";
 import { BsSquare } from "react-icons/bs";
 import { BsDiamond } from "react-icons/bs";
@@ -7,7 +7,7 @@ import { BsEraser } from "react-icons/bs";
 import { BsSlashLg } from "react-icons/bs";
 import { IoIosUndo } from "react-icons/io";
 import { IoIosRedo } from "react-icons/io";
-
+import { IoTextOutline  } from "react-icons/io5";
 export const TOOLS = {
   PENCIL: {
     id: "pencil",
@@ -44,6 +44,11 @@ export const TOOLS = {
     icon: BsSlashLg,
     name: "LINE",
   },
+  TEXT:{
+    id: "text",
+    icon: IoTextOutline   ,
+    name: "Text",
+  }
 };
 
 export const ACTIONS = {
@@ -67,12 +72,16 @@ export const ALLOWED_METHODS = {
   DRAW_DOWN: "DRAW_DOWN",
   DRAW_MOVE: "DRAW_MOVE",
   DRAW_UP: "DRAW_UP",
+  CLEAR_BOARD: "CLEAR_BOARD",
+  ERASE_ELEMENT: "ERASE_ELEMENT",
+  ADD_TEXT: "ADD_TEXT",
 };
 
 export const TOOL_ACTION_TYPE = {
   NONE: "NONE",
   DRAW: "DRAW",
   ERASE: "ERASE",
+  WRITE: "WRITE",
 };
 
 export const DEFAULT_TOOL = TOOLS.PEN;

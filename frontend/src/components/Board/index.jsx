@@ -3,8 +3,10 @@ import rough from "roughjs";
 import { BoardContext } from "../../store/board/board-context";
 import { TOOL_ACTION_TYPE, TOOLS } from "../../utils/constants";
 import toolboxContext from "../../store/board/toolbar-context";
+
 const Board = () => {
   const canvasRef = useRef(null);
+  
   const {
     elements,
     activeTool,
@@ -12,6 +14,7 @@ const Board = () => {
     dispatchBoardAction,
     ALLOWED_METHODS,
   } = React.useContext(BoardContext);
+
   const { toolBoxState } = React.useContext(toolboxContext);
 
   useEffect(() => {
@@ -85,50 +88,79 @@ const Board = () => {
         });
         break;
       }
+      case TOOLS.ERASER: {
+        newElement = {
+          type: activeTool,
+          x1: clientX,
+          y1: clientY,
+        };
+        dispatchBoardAction({
+          type: ALLOWED_METHODS.DRAW_DOWN,
+          payload: newElement,
+        });
+        break;
+      }
       default:
         break;
     }
   };
 
   const handleMouseMove = (event) => {
-    if (ToolActionType == TOOL_ACTION_TYPE.DRAW) {
       const { clientX, clientY } = event;
-      switch (activeTool) {
-        case TOOLS.PENCIL: {
-          if (event.buttons !== 1) return;
-          const newElement = {
-            type: activeTool,
-            points: [[event.pageX, event.pageY, event.pressure]],
-          };
-          dispatchBoardAction({
-            type: ALLOWED_METHODS.DRAW_MOVE,
-            payload: newElement,
-          });
-          break;
+      if (
+        ToolActionType == TOOL_ACTION_TYPE.DRAW ||
+        ToolActionType == TOOL_ACTION_TYPE.ERASE
+      ) {
+       
+        switch (activeTool) {
+          case TOOLS.PENCIL: {
+            if (event.buttons !== 1) return;
+            const newElement = {
+              type: activeTool,
+              points: [[event.pageX, event.pageY, event.pressure]],
+            };
+            dispatchBoardAction({
+              type: ALLOWED_METHODS.DRAW_MOVE,
+              payload: newElement,
+            });
+            break;
+          }
+          case TOOLS.CIRCLE:
+          case TOOLS.RECTANGLE:
+          case TOOLS.DIAMOND:
+          case TOOLS.ARROW:
+          case TOOLS.LINE: {
+            const newElement = {
+              type: activeTool,
+              x2: clientX,
+              y2: clientY,
+              color: toolBoxState[activeTool.name].stroke,
+              strokeWidth: toolBoxState[activeTool.name].size,
+              fill: toolBoxState[activeTool.name]?.fillcolor,
+              fillStyle: toolBoxState[activeTool.name]?.fillStyle,
+            };
+            dispatchBoardAction({
+              type: ALLOWED_METHODS.DRAW_MOVE,
+              payload: newElement,
+            });
+            break;
+          }
+          case TOOLS.ERASER: {
+            const newElement = {
+              type: activeTool,
+              x1: clientX,
+              y1: clientY,
+            };
+            console.log("ERASER MOVING", newElement);
+            dispatchBoardAction({
+              type: ALLOWED_METHODS.ERASE_ELEMENT,
+              payload: newElement,
+            });
+            break;
+          }
+          default:
+            break;
         }
-        case TOOLS.CIRCLE:
-        case TOOLS.RECTANGLE:
-        case TOOLS.DIAMOND:
-        case TOOLS.ARROW:
-        case TOOLS.LINE: {
-          const newElement = {
-            type: activeTool,
-            x2: clientX,
-            y2: clientY,
-            color: toolBoxState[activeTool.name].stroke,
-            strokeWidth: toolBoxState[activeTool.name].size,
-            fill: toolBoxState[activeTool.name]?.fillcolor,
-            fillStyle: toolBoxState[activeTool.name]?.fillStyle,
-          };
-          dispatchBoardAction({
-            type: ALLOWED_METHODS.DRAW_MOVE,
-            payload: newElement,
-          });
-          break;
-        }
-        default:
-          break;
-      }
     }
   };
 

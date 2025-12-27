@@ -17,24 +17,6 @@ export const createTool = (
   streamline = 0.5,
 
 ) => {
-
-
-  console.log("Creating tool:", {
-      id, 
-  x1,
-  y1,
-  x2,
-  y2,
-  color,
-  points,
-  strokeWidth,
-  fill,
-  fillStyle,
-  thinning,
-  smoothing,
-  streamline,
-  });
-
   const generator = rough.generator();
   switch (id) {
     case TOOLS.LINE.id:
@@ -140,3 +122,93 @@ export function getSvgPathFromStroke(stroke) {
   d.push("Z")
   return d.join(" ")
 }
+
+
+export const isPointNearElement = (x, y, element, offset = 10) => {
+  const { type, x1, y1, x2, y2, points } = element;
+  // console.log("Checking proximity for element:", x, y, element, offset);
+  switch (type) {
+    case TOOLS.LINE.id:
+    case TOOLS.ARROW.id:
+      return isPointNearLineSegment(x, y, x1, y1, x2, y2, offset);
+
+    case TOOLS.RECTANGLE.id:
+      return isPointNearRectangleBorder(x, y, x1, y1, x2, y2, offset);
+
+    case TOOLS.CIRCLE.id: {
+      return isPointNearCircle(x, y, x1, y1, x2, y2, offset);
+    }
+
+    case TOOLS.DIAMOND.id: {
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+      const diamondPoints = [
+        [midX, y1],
+        [x2, midY],
+        [midX, y2],
+        [x1, midY],
+      ];
+      return isPointNearPolygon(x, y, diamondPoints, offset);
+    }
+
+    case TOOLS.PENCIL.id:
+      if (Array.isArray(points)) {
+        return points.some(([px, py]) => Math.hypot(x - px, y - py) <= offset);
+      }
+      return false;
+
+    default:
+      return false;
+  }
+};
+const isPointNearLineSegment = (px, py, x1, y1, x2, y2, offset) => {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  if (dx === 0 && dy === 0) {
+    return Math.hypot(px - x1, py - y1) <= offset;
+  }
+
+  const t =
+    ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
+
+  const clampedT = Math.max(0, Math.min(1, t));
+
+  const closestX = x1 + clampedT * dx;
+  const closestY = y1 + clampedT * dy;
+
+  const distance = Math.hypot(px - closestX, py - closestY);
+
+  return distance <= offset;
+};
+const isPointNearRectangleBorder = (x, y, x1, y1, x2, y2, offset) => {
+  const minX = Math.min(x1, x2);
+  const maxX = Math.max(x1, x2);
+  const minY = Math.min(y1, y2);
+  const maxY = Math.max(y1, y2);
+
+  return (
+    isPointNearLineSegment(x, y, minX, minY, maxX, minY, offset) ||
+    isPointNearLineSegment(x, y, maxX, minY, maxX, maxY, offset) ||
+    isPointNearLineSegment(x, y, maxX, maxY, minX, maxY, offset) ||
+    isPointNearLineSegment(x, y, minX, maxY, minX, minY, offset)
+  );
+};
+const isPointNearCircle = (x, y, cx, cy, px, py, offset=10) => {
+  // radius = distance from center to any point on circumference
+  const radius = Math.hypot(px - cx, py - cy);
+  // distance from center to test point
+  const dist = Math.hypot(x - cx, y - cy);
+  // near the circle edge (not inside)
+  return Math.abs(dist - radius) <= offset;
+};
+const isPointNearPolygon = (x, y, points, offset) => {
+  for (let i = 0; i < points.length; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % points.length];
+    if (isPointNearLineSegment(x, y, x1, y1, x2, y2, offset)) {
+      return true;
+    }
+  }
+  return false;
+};
