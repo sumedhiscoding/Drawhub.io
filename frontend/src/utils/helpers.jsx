@@ -101,6 +101,9 @@ export const createTool = (
       const path = getSvgPathFromStroke(stroke);
       return path;
     }
+    case TOOLS.TEXT.id:{
+      return null; // Text tool does not have a rough element
+    }
     default:
       throw new Error(`Unknown tool type: ${id}`);
   }

@@ -87,6 +87,11 @@ const initialToolBoxState={
     },
     [TOOLS.ERASER.name]: {
         size: 1
+    },
+    [TOOLS.TEXT.name]: {
+        stroke: COLORS.Black,
+        fontSize: 16,
+        fontFamily: 'Arial',
     }
 }
 

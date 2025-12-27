@@ -101,7 +101,7 @@ const BoardReducer = (state, action) => {
       switch (state.activeTool) {
         case TOOLS.PENCIL: {
           const { points } = action.payload;
-          const index = elements.length - 1;
+          const index = elements.length - 1 > 0 ? elements.length -1 : 0;
           const activeToolId = activeTool?.id;
           // Flatten the points array
           const newPoints = [...elements[index].points, ...points];
@@ -134,8 +134,7 @@ const BoardReducer = (state, action) => {
         case TOOLS.DIAMOND:
         case TOOLS.ARROW: {
           const { x2, y2 } = action.payload;
-          const index = elements.length - 1;
-
+          const index = elements.length - 1 > 0 ? elements.length -1 : 0;
           const activeToolId = activeTool?.id;
           const updatedElement = {
             ...elements[index],
@@ -187,7 +186,44 @@ const BoardReducer = (state, action) => {
       );
       return { ...state, elements: filteredElements };
     }
+    case ALLOWED_METHODS.ADD_TEXT:{
+         const { x1, y1, text,fontSize,color } = action.payload;
+          const index = elements.length - 1 > 0 ? elements.length -1 : 0;
+          const updatedElement = {
+            type: activeTool.id,
+            ...elements[index],
+            left: x1,
+            top: y1,
+            text:text,
+            fontSize:fontSize,
+            color:color,
+          };
+          const updatedElements = [...elements];
+          updatedElements[index] = updatedElement;
+         console.log("ADD_TEXT action payload:", updatedElements);
 
+         return {
+            ...state,
+            ToolActionType: TOOL_ACTION_TYPE.WRITE,
+            elements: [...elements, updatedElement],
+          };
+          
+    }
+    case ALLOWED_METHODS.SAVE_TEXT:{
+        const textValue = action.payload;
+        const index = elements.length - 1 > 0 ? elements.length -1 : 0;
+        const updatedElement = {
+          ...elements[index],
+          text: textValue,
+        };
+        const updatedElements = [...elements];
+        updatedElements[index] = updatedElement;
+        return {
+          ...state,
+          ToolActionType: TOOL_ACTION_TYPE.NONE,
+          elements: updatedElements,
+        };
+    }
     default:
       return state;
   }

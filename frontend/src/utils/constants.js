@@ -46,7 +46,7 @@ export const TOOLS = {
   },
   TEXT:{
     id: "text",
-    icon: IoTextOutline   ,
+    icon: IoTextOutline,
     name: "Text",
   }
 };
@@ -75,6 +75,7 @@ export const ALLOWED_METHODS = {
   CLEAR_BOARD: "CLEAR_BOARD",
   ERASE_ELEMENT: "ERASE_ELEMENT",
   ADD_TEXT: "ADD_TEXT",
+  SAVE_TEXT: "SAVE_TEXT",
 };
 
 export const TOOL_ACTION_TYPE = {
