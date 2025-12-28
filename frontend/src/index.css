@@ -1,6 +1,17 @@
 @import "tailwindcss";
 
 @layer components {
+  .toolbox-color-btn {
+    @apply w-6 h-6 border border-gray-300 rounded cursor-pointer transition-transform duration-200 ease-in-out shadow;
+  }
+  .toolbox-color-btn:hover {
+    @apply scale-125 z-10 shadow-xl border-blue-400;
+    /* Smooth, elegant highlight on hover */
+    background-color: #f0f9ff;
+    border-width: 2px;
+    border-color: #38bdf8;
+  }
+
   .toolbar {
     @apply absolute top-0 z-50 flex justify-center items-center left-[calc(50vw-(15vw/2))]  py-2;
   }
@@ -13,4 +24,55 @@
   .toolbar-button-active {
     @apply bg-blue-400 text-white;
   }
+  .toolbox-container {
+    @apply absolute top-[40vh] right-[1vw];
+  }
+  .toolbox {
+    @apply shadow-lg p-4 rounded-lg bg-white w-fit;
+  }
+  .toolbox-section {
+    @apply p-2;
+  }
+  .toolbox-h4 {
+    @apply m-0 mb-2 text-base underline decoration-sky-500   decoration-double;
+  }
+  .toolbox-color-palette {
+    @apply flex flex-wrap gap-1;
+  }
+  .toolbox-color-btn {
+    @apply w-6 h-6 border border-gray-300 rounded cursor-pointer;
+  }
+  .toolbox-color-btn-active {
+    @apply border-2 border-black;
+  }
+  .toolbox-none-btn {
+    @apply w-6 h-6 border border-gray-300 rounded cursor-pointer bg-transparent flex items-center justify-center text-xs;
+  }
+  .toolbox-stroke-width {
+    @apply flex items-center gap-2 flex-1;
+  }
+  .toolbox-flex {
+    @apply flex items-center mb-3 gap-4;
+  }
+  .toolbox-flex-label {
+    @apply min-w-[80px] text-left text-base leading-6;
+  }
+  .toolbox-flex-slider {
+    @apply flex-1 min-w-[120px] mx-2 h-7;
+  }
+  .toolbox-flex-value {
+    @apply min-w-[40px] text-right text-base leading-6;
+  }
+  .toolbox-flex-slider,
+  .toolbox-stroke-width input[type="range"] {
+    @apply w-full flex-1 mx-0 h-2 rounded-full bg-blue-100;
+    accent-color: #38bdf8;
+    outline: none;
+    transition: box-shadow 0.2s, background 0.2s,
+      width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 0.5rem;
+    border: none;
+    min-width: 0;
+  }
+ 
 }

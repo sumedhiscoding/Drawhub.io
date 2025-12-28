@@ -17,6 +17,11 @@ export const createTool = (
   streamline = 0.5,
 
 ) => {
+  console.log("Creating tool:", {
+  color,
+  thinning,
+  smoothing,
+  streamline,}  )
   const generator = rough.generator();
   switch (id) {
     case TOOLS.LINE.id:
@@ -87,6 +92,17 @@ export const createTool = (
       );
     }
     case TOOLS.PENCIL.id:{
+      console.log("Creating PENCIL rough element with points:",color, points,{thinning, smoothing, streamline, size: strokeWidth,
+        start: {
+        cap: true,
+        taper: 0,
+        easing: (t) => t,
+        },
+        end: {
+          cap: true,
+          taper: 0,
+          easing: (t) => t,
+        },});
       const stroke = getStroke(points,{thinning, smoothing, streamline, size: strokeWidth,
         start: {
         cap: true,
@@ -129,7 +145,6 @@ export function getSvgPathFromStroke(stroke) {
 
 export const isPointNearElement = (x, y, element, offset = 10) => {
   const { type, x1, y1, x2, y2, points } = element;
-  // console.log("Checking proximity for element:", x, y, element, offset);
   switch (type) {
     case TOOLS.LINE.id:
     case TOOLS.ARROW.id:

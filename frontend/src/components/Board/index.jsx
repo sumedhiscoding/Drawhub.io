@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef } from "react";
+import React, { act, useEffect, useLayoutEffect, useRef } from "react";
 import rough from "roughjs";
 import { BoardContext } from "../../store/board/board-context";
 import { TOOL_ACTION_TYPE, TOOLS } from "../../utils/constants";
@@ -19,37 +19,37 @@ const Board = () => {
   const { toolBoxState } = React.useContext(toolboxContext);
 
   useEffect(() => {
-  const canvas = canvasRef.current;
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = window.innerWidth * dpr;
-  canvas.height = window.innerHeight * dpr;
-  canvas.style.width = `${window.innerWidth}px`;
-  canvas.style.height = `${window.innerHeight}px`;
-  const context = canvas.getContext("2d");
-  context.setTransform(1, 0, 0, 1, 0, 0); // Reset any existing transforms
-  context.scale(dpr, dpr); // Scale for high-DPI
-  canvas.style.backgroundColor = "#fdfdfd";
-  return () => {};
-}, []);
+    const canvas = canvasRef.current;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = `${window.innerWidth}px`;
+    canvas.style.height = `${window.innerHeight}px`;
+    const context = canvas.getContext("2d");
+    context.setTransform(1, 0, 0, 1, 0, 0); // Reset any existing transforms
+    context.scale(dpr, dpr); // Scale for high-DPI
+    canvas.style.backgroundColor = "#fdfdfd";
+    return () => {};
+  }, []);
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     context.save();
     const rc = rough.canvas(canvas);
-    console.log("Rendering elements:", elements, elements.length);
     elements.forEach((element) => {
       if (element?.type == TOOLS.TEXT.id) {
-        console.log("Rendering TEXT element:", element);
-        context.textBaseline = 'top';
+        context.textBaseline = "top";
         context.font = `${element.fontSize}px Arial`;
         context.fillStyle = element.color;
         context.fillText(element.text, element.left, element.top);
         context.restore();
         return;
       } else if (element.type === TOOLS.PENCIL.id) {
+        console.log("Drawing pencil element", element);
         const drawingPath = element.roughElement;
         const myPath = new Path2D(drawingPath);
+        context.fillStyle = element.color || '#000';
         context.fill(myPath);
         context.restore();
         return;
@@ -127,7 +127,6 @@ const Board = () => {
         break;
       }
       case TOOLS.TEXT: {
-        console.log("TEXT TOOL SELECTED");
         newElement = {
           type: activeTool,
           x1: clientX,
@@ -161,7 +160,13 @@ const Board = () => {
           const newElement = {
             type: activeTool,
             points: [[event.pageX, event.pageY, event.pressure]],
+            strokeWidth: toolBoxState[activeTool.name].size,
+            color: toolBoxState[activeTool.name].stroke,
+            thinning: toolBoxState[activeTool.name].thinning,
+            smoothing: toolBoxState[activeTool.name].smoothing,
+            streamline: toolBoxState[activeTool.name].streamline,
           };
+          console.log("newElement is being moved", newElement);
           dispatchBoardAction({
             type: ALLOWED_METHODS.DRAW_MOVE,
             payload: newElement,
@@ -194,7 +199,6 @@ const Board = () => {
             x1: clientX,
             y1: clientY,
           };
-          console.log("ERASER MOVING", newElement);
           dispatchBoardAction({
             type: ALLOWED_METHODS.ERASE_ELEMENT,
             payload: newElement,
@@ -208,7 +212,6 @@ const Board = () => {
   };
 
   const handleMoveUp = (event) => {
-    console.log("Mouse Up Event", ToolActionType);
     if (ToolActionType === TOOL_ACTION_TYPE.WRITE) {
       return;
     }
@@ -253,7 +256,7 @@ const Board = () => {
           placeholder=""
           onBlur={(e) => {
             const textValue = e.target.value;
-           return textAreaBlur(textValue);
+            return textAreaBlur(textValue);
           }}
         ></textarea>
       ) : (

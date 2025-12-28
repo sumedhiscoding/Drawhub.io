@@ -21,7 +21,6 @@ const BoardReducer = (state, action) => {
             smoothing,
             streamline,
           } = action.payload;
-          console.log("DRAW_DOWN action payload:", action.payload);
           const activeToolId = activeTool?.id;
           const newElement = {
             type: activeToolId,
@@ -88,7 +87,6 @@ const BoardReducer = (state, action) => {
           };
         }
         case TOOLS.ERASER: {
-          console.log("ehasdfasdf1");
           return { ...state, ToolActionType: TOOL_ACTION_TYPE.ERASE };
         }
         default:
@@ -98,11 +96,18 @@ const BoardReducer = (state, action) => {
     case ALLOWED_METHODS.DRAW_MOVE: {
       switch (state.activeTool) {
         case TOOLS.PENCIL: {
-          const { points } = action.payload;
+          const { points,color,
+            strokeWidth,
+            thinning,
+            smoothing,
+            streamline, } = action.payload;
           const index = elements.length - 1 > 0 ? elements.length - 1 : 0;
           const activeToolId = activeTool?.id;
           // Flatten the points array
           const newPoints = [...elements[index].points, ...points];
+          console.log("New Points:", color, strokeWidth, thinning, smoothing,
+              streamline);
+          
           const updatedElement = {
             ...elements[index],
             points: newPoints,
@@ -112,14 +117,14 @@ const BoardReducer = (state, action) => {
               elements[index]?.y1,
               elements[index]?.x2,
               elements[index]?.y2,
-              elements[index]?.color,
+              color,
               newPoints,
-              elements[index]?.strokeWidth,
+              strokeWidth,
               elements[index]?.fill,
               elements[index]?.fillStyle,
-              elements[index]?.thinning,
-              elements[index]?.smoothing,
-              elements[index]?.streamline
+              thinning,
+              smoothing,
+              streamline
             ),
           };
           const updatedElements = [...elements];
@@ -176,9 +181,6 @@ const BoardReducer = (state, action) => {
     case ALLOWED_METHODS.SET_COLOR: {
       return { ...state, color: action.payload };
     }
-    case ALLOWED_METHODS.SET_STROKE_WIDTH: {
-      return { ...state, strokeWidth: action.payload };
-    }
     case ALLOWED_METHODS.CLEAR_BOARD: {
       return { ...state, elements: [] };
     }
@@ -198,7 +200,6 @@ const BoardReducer = (state, action) => {
     }
     case ALLOWED_METHODS.ADD_TEXT: {
       const { x1, y1, text, fontSize, color } = action.payload;
-      console.log("ADD_TEXT action payload received:", action.payload);
       const updatedElement = {
         type: activeTool.id,
         left: x1,
@@ -207,7 +208,6 @@ const BoardReducer = (state, action) => {
         fontSize: fontSize,
         color: color,
       };
-      console.log("Updated element with text:", updatedElement);
       const updatedElements = [...elements, updatedElement];
       return {
         ...state,
@@ -282,13 +282,11 @@ const BoardProvider = ({ children }) => {
     });
 
   const boardUndoHandler = () => {
-    console.log("Undo handler called");
     dispatchBoardAction({
       type: ALLOWED_METHODS.UNDO,
     });
   };
   const boardRedoHandler = () => {
-    console.log("Redo handler called");
     dispatchBoardAction({
       type: ALLOWED_METHODS.REDO,
     });

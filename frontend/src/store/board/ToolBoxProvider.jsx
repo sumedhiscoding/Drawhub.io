@@ -21,14 +21,13 @@ function toolboxReducer(state, action){
                 },
             };
         case 'SET_STROKE_WIDTH':
-            console.log("Reducer - Setting stroke width:",state,action);
-            return {
-                ...state,
-                [action.tool.name]: {
-                    ...state[action.tool.name],
-                    size: action.width,
-                },
-            };
+                return {
+                    ...state,
+                    [action.tool.name]: {
+                        ...state[action.tool.name],
+                        size: action.width,
+                    },
+                };    
         case 'SET_FILL_STYLE':
             return {
                 ...state,
@@ -45,6 +44,14 @@ function toolboxReducer(state, action){
                     [action.prop]: action.value,
                 },
             };
+        case 'SET_FONT_SIZE':
+            return {
+            ...state,
+            [action.tool.name]: {
+                ...state[action.tool.name],
+                fontSize: action.fontSize,
+            },
+        };    
         default:
             return state;
     }
