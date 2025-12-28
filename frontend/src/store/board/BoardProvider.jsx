@@ -189,12 +189,8 @@ const BoardReducer = (state, action) => {
       const filteredElements = elements.filter(
         (element) => !isPointNearElement(x1, y1, element)
       );
-      const newHistory = state.history.slice(0, state.index + 1);
-      newHistory.push(filteredElements);
       return {
         ...state,
-        history: newHistory,
-        index: newHistory.length - 1,
         elements: filteredElements,
       };
     }
