@@ -2,7 +2,21 @@ import React, { act, useContext } from "react";
 import { COLORS, FILL_STYLES, TOOLS } from "../../utils/constants";
 import toolboxContext from "../../store/board/toolbar-context";
 import { BoardContext } from "../../store/board/board-context";
+
 import { easingOptions } from "../../utils/constants";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+
+
 const Toolbox = () => {
   const { toolBoxState, dispatchToolBoxAction } = useContext(toolboxContext);
   const { activeTool } = useContext(BoardContext);
@@ -90,15 +104,12 @@ const Toolbox = () => {
             <div className="toolbox-section">
               <div className="toolbox-flex">
                 <span className="toolbox-flex-label">Thinning</span>
-                <input
-                  type="range"
+                <Slider
                   min={0}
                   max={1}
                   step={0.01}
-                  value={pencilProps.thinning ?? 0.5}
-                  onChange={(e) =>
-                    handlePencilPropChange("thinning", Number(e.target.value))
-                  }
+                  value={[pencilProps.thinning ?? 0.5]}
+                  onValueChange={([val]) => handlePencilPropChange("thinning", val)}
                   className="toolbox-flex-slider"
                 />
                 <span className="toolbox-flex-value">
@@ -107,15 +118,12 @@ const Toolbox = () => {
               </div>
               <div className="toolbox-flex">
                 <span className="toolbox-flex-label">Streamline</span>
-                <input
-                  type="range"
+                <Slider
                   min={0}
                   max={1}
                   step={0.01}
-                  value={pencilProps.streamline ?? 0.5}
-                  onChange={(e) =>
-                    handlePencilPropChange("streamline", Number(e.target.value))
-                  }
+                  value={[pencilProps.streamline ?? 0.5]}
+                  onValueChange={([val]) => handlePencilPropChange("streamline", val)}
                   className="toolbox-flex-slider"
                 />
                 <span className="toolbox-flex-value">
@@ -124,15 +132,12 @@ const Toolbox = () => {
               </div>
               <div className="toolbox-flex">
                 <span className="toolbox-flex-label">Smoothing</span>
-                <input
-                  type="range"
+                <Slider
                   min={0}
                   max={1}
                   step={0.01}
-                  value={pencilProps.smoothing ?? 0.5}
-                  onChange={(e) =>
-                    handlePencilPropChange("smoothing", Number(e.target.value))
-                  }
+                  value={[pencilProps.smoothing ?? 0.5]}
+                  onValueChange={([val]) => handlePencilPropChange("smoothing", val)}
                   className="toolbox-flex-slider"
                 />
                 <span className="toolbox-flex-value">
@@ -141,22 +146,24 @@ const Toolbox = () => {
               </div>
               <div className="toolbox-flex">
                 <span className="toolbox-flex-1">Easing</span>
-                <select
+                <Select
                   value={pencilProps.easing || "EaseInOutCubic"}
-                  onChange={(e) =>
-                    handlePencilPropChange("easing", e.target.value)
-                  }
-                  className={`toolbox-select${
-                    pencilProps.easing ? " toolbox-select-active" : ""
-                  }`}
-                  style={{ marginTop: "4px" }}
+                  onValueChange={(val) => handlePencilPropChange("easing", val)}
                 >
-                  {easingOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className={`toolbox-select${pencilProps.easing ? " toolbox-select-active" : ""}`} style={{ marginTop: "4px" }}>
+                    <SelectValue placeholder="Select Easing" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Easing</SelectLabel>
+                      {easingOptions.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -198,75 +205,72 @@ const Toolbox = () => {
           <div className="toolbox-section">
             <h4 className="toolbox-h4">Fill Style</h4>
             <div>
-              <select
+              <Select
                 value={currentToolState?.fillStyle ?? ""}
-                onChange={(e) => handleFillStyleChange(e.target.value)}
-                className={`toolbox-select${
-                  currentToolState?.fillStyle ? " toolbox-select-active" : ""
-                }`}
-                style={{ marginTop: "4px" }}
+                onValueChange={(val) => handleFillStyleChange(val)}
               >
-                <option value="">No Fill Style</option>
-                {Object.entries(FILL_STYLES).map(([name, style]) => (
-                  <option key={name} value={style}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className={`toolbox-select${currentToolState?.fillStyle ? " toolbox-select-active" : ""}`} style={{ marginTop: "4px" }}>
+                  <SelectValue placeholder="No Fill Style" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Fill Style</SelectLabel>
+                    {/* Remove invalid empty value SelectItem, rely on placeholder instead */}
+                    {Object.entries(FILL_STYLES).map(([name, style]) => (
+                      <SelectItem key={name} value={style}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         )}
         <div className="toolbox-section">
           <h4 className="toolbox-h4">Stroke Width</h4>
           <div className="toolbox-stroke-width">
-            {/* Slider for TEXT tool */}
-            {activeTool.name === TOOLS.TEXT.name && (
+            {activeTool.name === TOOLS.TEXT.name ? (
               <>
-                <input
-                  type="range"
-                  min="8"
-                  max="72"
-                  value={currentToolState?.fontSize || 16}
-                  onChange={(e) => handleStrokeWidthChange(e.target.value)}
+                <Slider
+                  min={8}
+                  max={72}
+                  step={1}
+                  value={[currentToolState?.fontSize || 16]}
+                  onValueChange={([val]) => handleStrokeWidthChange(val)}
+                  className="toolbox-flex-slider"
                 />
                 <span>{currentToolState?.fontSize || 16}px</span>
               </>
+            ) : activeTool.name === TOOLS.PENCIL?.name ? (
+              <>
+                <Slider
+                  min={1}
+                  max={20}
+                  step={1}
+                  value={[currentToolState?.size || 2]}
+                  onValueChange={([val]) => handleStrokeWidthChange(val)}
+                  className="toolbox-flex-slider"
+                />
+                <span className="slider-label">
+                  {currentToolState?.size || 2}px
+                </span>
+              </>
+            ) : (
+              <>
+                <Slider
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={[currentToolState?.size || 1]}
+                  onValueChange={([val]) => handleStrokeWidthChange(val)}
+                  className="toolbox-flex-slider"
+                />
+                <span className="slider-label">
+                  {currentToolState?.size || 1}px
+                </span>
+              </>
             )}
-            {/* Slider for Pencil tool */}
-            <div className="toolbox-stroke-width">
-              {activeTool.name === TOOLS.PENCIL?.name && (
-                <>
-                  <input
-                    type="range"
-                    min="1"
-                    max="20"
-                    value={currentToolState?.size || 2}
-                    onChange={(e) => handleStrokeWidthChange(e.target.value)}
-                    className="slider-range-input slider-track smooth-transition"
-                  />
-                  <span className="slider-label">
-                    {currentToolState?.size || 2}px
-                  </span>
-                </>
-              )}
-              {/* Slider for all other tools */}
-              {activeTool.name !== TOOLS.TEXT.name &&
-                activeTool.name !== TOOLS.PENCIL?.name && (
-                  <>
-                    <input
-                      type="range"
-                      min="1"
-                      max="10"
-                      value={currentToolState?.size || 1}
-                      onChange={(e) => handleStrokeWidthChange(e.target.value)}
-                      className="slider-range-input slider-track smooth-transition"
-                    />
-                    <span className="slider-label">
-                      {currentToolState?.size || 1}px
-                    </span>
-                  </>
-                )}
-            </div>
           </div>
         </div>
       </div>

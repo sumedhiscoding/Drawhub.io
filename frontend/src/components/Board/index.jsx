@@ -3,6 +3,7 @@ import rough from "roughjs";
 import { BoardContext } from "../../store/board/board-context";
 import { TOOL_ACTION_TYPE, TOOLS } from "../../utils/constants";
 import toolboxContext from "../../store/board/toolbar-context";
+import { Textarea } from "@/components/ui/textarea"
 
 const Board = () => {
   const canvasRef = useRef(null);
@@ -236,8 +237,8 @@ const Board = () => {
   return (
     <>
       {ToolActionType === TOOL_ACTION_TYPE.WRITE ? (
-        <textarea
-          className="text-input-container"
+        <Textarea
+          className="w-100"
           ref={textAreaRef}
           style={{
             position: "absolute",
@@ -245,11 +246,6 @@ const Board = () => {
             top: elements[elements.length - 1]?.top || 0,
             fontSize: `${toolBoxState[activeTool.name]?.fontSize || 16}px`,
             color: toolBoxState[activeTool.name]?.stroke || "#000",
-            background: "transparent",
-            outline: "black",
-            border: "1px solid #ccc",
-            minWidth: "100px",
-            minHeight: "30px",
             zIndex: 10,
           }}
           type="text"
@@ -258,7 +254,7 @@ const Board = () => {
             const textValue = e.target.value;
             return textAreaBlur(textValue);
           }}
-        ></textarea>
+        ></Textarea>
       ) : (
         <></>
       )}
