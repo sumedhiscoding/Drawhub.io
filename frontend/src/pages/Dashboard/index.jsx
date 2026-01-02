@@ -54,11 +54,7 @@ const Dashboard = () => {
       const response = await axios.post(
         "http://localhost:4000/canvas/create",
         {
-          name: newCanvasName,
-          description: "",
-          elements: [],
-          background_color: "#ffffff",
-          shared_with_ids: [],
+          name: newCanvasName.trim(),
         },
         {
           headers: {
@@ -73,7 +69,7 @@ const Dashboard = () => {
       navigate(`/canvas/${response.data.canvas.id}`);
     } catch (error) {
       console.error("Error creating canvas:", error);
-      alert("Failed to create canvas. Please try again.");
+      alert(error.response?.data?.error || "Failed to create canvas. Please try again.");
     } finally {
       setCreating(false);
     }

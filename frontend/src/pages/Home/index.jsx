@@ -10,7 +10,7 @@ const Home = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <WifiPen strokeWidth={1.5} size={36} className="text-primary" />
-            <h1 className="text-3xl font-bold text-primary">DrawHub</h1>
+            <h1 className="text-3xl font-bold text-foreground">DrawHub</h1>
           </div>
           <div className="flex gap-3">
             <Button variant="ghost" asChild>

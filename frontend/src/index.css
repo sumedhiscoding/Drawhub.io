@@ -5,79 +5,113 @@
 
 @layer components {
   .toolbox-color-btn {
-    @apply w-6 h-6 border border-gray-300 rounded cursor-pointer transition-transform duration-200 ease-in-out shadow;
+    @apply w-6 h-6 border border-border rounded cursor-pointer transition-transform duration-200 ease-in-out shadow;
   }
   .toolbox-color-btn:hover {
-    @apply scale-125 z-10 shadow-xl border-blue-400;
-    /* Smooth, elegant highlight on hover */
-    background-color: #f0f9ff;
+    @apply scale-125 z-10 shadow-xl;
     border-width: 2px;
-    border-color: #38bdf8;
+    border-color: hsl(var(--primary));
   }
-
   .toolbar {
-    @apply absolute top-0 z-50 flex justify-center items-center left-[calc(50vw-(15vw/2))]  py-2;
+    @apply absolute top-0 z-50 flex justify-center items-center left-[calc(50vw-(15vw/2))] py-2;
   }
   .toolbar-buttons {
-    @apply shadow-xl py-2 rounded-xl bg-white flex justify-between items-center;
+    @apply shadow-xl py-2 rounded-xl bg-card border border-border flex justify-between items-center;
   }
   .toolbar-button {
-    @apply mx-1 px-3 py-3 rounded-xl  hover:bg-blue-100 transition-colors;
+    @apply mx-1 px-3 py-3 rounded-xl text-foreground hover:bg-accent transition-colors;
   }
   .toolbar-button-active {
-    @apply bg-blue-400 text-white;
+    @apply bg-primary text-primary-foreground;
   }
   .toolbox-container {
     @apply absolute top-[40vh] right-[1vw];
   }
   .toolbox {
-    @apply shadow-lg p-4 rounded-lg bg-white w-fit;
-  }
-  .toolbox-section {
-    @apply p-2 border-b border-gray-200 mb-4 last:mb-0 last:border-0;
+    @apply shadow-lg p-4 rounded-lg bg-card border border-border w-fit text-foreground;
   }
   .toolbox-h4 {
-    @apply m-0 mb-2 text-base   ;
+    @apply m-0 text-base font-semibold text-foreground;
   }
   .toolbox-color-palette {
-    @apply flex flex-wrap gap-1;
+    @apply flex flex-wrap gap-1 p-2;
   }
   .toolbox-color-btn {
-    @apply w-6 h-6 border border-gray-300 rounded cursor-pointer;
+    @apply w-6 h-6 border border-border rounded cursor-pointer;
   }
   .toolbox-color-btn-active {
-    @apply border-2 border-black;
+    @apply border-2;
+    border-color: hsl(var(--primary));
   }
   .toolbox-none-btn {
-    @apply w-6 h-6 border border-gray-300 rounded cursor-pointer bg-transparent flex items-center justify-center text-xs;
+    @apply w-6 h-6 border border-border rounded cursor-pointer bg-transparent flex items-center justify-center text-xs text-foreground;
   }
   .toolbox-stroke-width {
     @apply flex items-center gap-2 flex-1;
+  }
+  .toolbox-stroke-width span {
+    @apply text-foreground text-sm;
   }
   .toolbox-flex {
     @apply items-center mb-3 gap-4;
   }
   .toolbox-flex-label {
-    @apply min-w-[80px] text-left text-base leading-6;
+    @apply min-w-[80px] text-left text-base leading-6 text-foreground;
   }
   .toolbox-flex-slider {
     @apply flex-1 min-w-[120px] mx-2 h-7;
   }
   .toolbox-flex-value {
-    @apply min-w-[40px] text-right text-base leading-6;
+    @apply min-w-[40px] text-right text-base leading-6 text-foreground;
+  }
+  .toolbox-flex-1 {
+    @apply text-foreground;
+  }
+  .slider-label {
+    @apply text-foreground text-sm;
+  }
+  .toolbox-select {
+    @apply text-foreground;
   }
   .toolbox-flex-slider,
   .toolbox-stroke-width input[type="range"] {
-    @apply w-full flex-1 mx-0 h-2 rounded-full bg-blue-100;
-    accent-color: #38bdf8;
+    @apply w-full flex-1 mx-0 h-2 rounded-full;
+    background: hsl(var(--muted));
+    accent-color: hsl(var(--primary));
     outline: none;
     transition: box-shadow 0.2s, background 0.2s,
-      width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width 1.3s cubic-bezier(0.4, 0, 0.2, 1);
     height: 0.5rem;
     border: none;
     min-width: 0;
   }
 
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-accordion-up {
+  animation: accordion-up .2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {
@@ -125,12 +159,12 @@
 :root {
   --radius: 0.625rem;
   --background: oklch(0.12 0 0);
-  --foreground: oklch(0.95 0 0);
+  --foreground: oklch(0.95 0 0); 
   --card: oklch(0.18 0 0);
   --card-foreground: oklch(0.95 0 0);
   --popover: oklch(0.18 0 0);
   --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.65 0.28 350);
+  --primary: #1B998B;
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.25 0 0);
   --secondary-foreground: oklch(0.95 0 0);
@@ -141,7 +175,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.25 0 0);
   --input: oklch(0.22 0 0);
-  --ring: oklch(0.65 0.28 350);
+  --ring: #1B998B;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -149,12 +183,12 @@
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.15 0 0);
   --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.65 0.28 350);
+  --sidebar-primary: #1B998B;
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.25 0 0);
   --sidebar-accent-foreground: oklch(0.95 0 0);
   --sidebar-border: oklch(0.25 0 0);
-  --sidebar-ring: oklch(0.65 0.28 350);
+  --sidebar-ring: #1B998B;
 
 }
 
@@ -165,7 +199,7 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.12 0 0);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.65 0.28 350);
+  --primary: #1B998B;
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.2 0 0);
   --secondary-foreground: oklch(0.98 0 0);
@@ -176,7 +210,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(0.25 0 0);
   --input: oklch(0.18 0 0);
-  --ring: oklch(0.65 0.28 350);
+  --ring: #1B998B;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -184,12 +218,12 @@
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.1 0 0);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.65 0.28 350);
+  --sidebar-primary: #1B998B;
   --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.2 0 0);
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(0.25 0 0);
-  --sidebar-ring: oklch(0.65 0.28 350);
+  --sidebar-ring: #1B998B;
 
 }
 

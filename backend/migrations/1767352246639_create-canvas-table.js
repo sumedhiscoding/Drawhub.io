@@ -12,7 +12,7 @@ export const up = (pgm) => {
     pgm.createTable('canvas', {
         id: 'id',
         name: { type: 'varchar(255)', notNull: true },
-        description: { type: 'text' },
+        description: { type: 'text', notNull: false },
         owner_id: { 
             type: 'integer', 
             notNull: true, 
@@ -21,18 +21,15 @@ export const up = (pgm) => {
         },
         shared_with_ids: { 
             type: 'integer[]', 
-            notNull: false,
-            default: '{}'
+            notNull: false
         },
         elements: { 
             type: 'jsonb', 
-            notNull: false,
-            default: '[]'
+            notNull: false
         },
         background_color: { 
             type: 'varchar(255)', 
-            notNull: false, 
-            default: '#ffffff' 
+            notNull: false
         },
         background_image_url: { 
             type: 'varchar(255)', 
@@ -49,6 +46,7 @@ export const up = (pgm) => {
             default: pgm.func('current_timestamp'),
         }
     });
+    
 };
 
 /**
