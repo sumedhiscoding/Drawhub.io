@@ -6,7 +6,7 @@ const createUserInDatabase = async (name, email, hashedPassword) => {
     try {
         const pool = await connectDatabase();
         const user = await pool.any(sql.unsafe`
-            INSERT INTO "Users" (name, email, password)
+            INSERT INTO users (name, email, password)
             VALUES (${name}, ${email}, ${hashedPassword})
             RETURNING *
         `);
