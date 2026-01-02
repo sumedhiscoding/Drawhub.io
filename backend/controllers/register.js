@@ -1,20 +1,19 @@
 import connectDatabase from '../config/db.js';
 import logger from '../config/logger.js';
-import { sql } from 'slonik';
+import { createUser } from '../models/queries/user.queries.js';
 
-const createUserInDatabase = async (name, email, hashedPassword) => {
+const registerUser = async (name, email, hashedPassword) => {
     try {
         const pool = await connectDatabase();
-        const user = await pool.any(sql.unsafe`
-            INSERT INTO users (name, email, password)
-            VALUES (${name}, ${email}, ${hashedPassword})
-            RETURNING *
-        `);
-        return user;
+        const user = await pool.one(createUser({ name, email, password: hashedPassword }));
+        if(!user){
+            throw new Error("Failed to create user in database");
+        }
+        return mapUserRow(user);
     } catch (error) {
         logger.error(error, "Error creating user in database");
-        throw error;
+        return null;
     }
 };
 
-export default createUserInDatabase;
+export default registerUser;

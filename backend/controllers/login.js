@@ -1,30 +1,23 @@
 import connectDatabase from '../config/db.js';
 import logger from '../config/logger.js';
-import { sql } from 'slonik';
 import bcrypt from 'bcrypt';
-
+import { findUserByEmail } from '../models/queries/user.queries.js';
+import mapUserRow from '../models/mappers/user.mapper.js';
 const loginUser = async (email, password) => {
     try {
+        logger.info(`Logging in user: ${email}, ${password}`);
         const pool = await connectDatabase();
-        const users = await pool.any(sql.unsafe`
-            SELECT * FROM users WHERE email = ${email}
-        `);
-        
-        if (users.length === 0) {
-            return null; // User not found
+        const user = await pool.one(findUserByEmail(email));
+        const mappedUser = mapUserRow(user);
+        if (!mappedUser) {
+            logger.error(`User not found: ${email}`);
+            return null;
         }
-        
-        const user = users[0];
-        
-        // Compare password
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        
+        const isPasswordValid = await bcrypt.compare(password, mappedUser.password);
         if (!isPasswordValid) {
-            return null; // Invalid password
+            return null; 
         }
-        
-        // Remove password from user object before returning
-        const { password: _, ...userWithoutPassword } = user;
+        const { password: _, ...userWithoutPassword } = mappedUser;
         return userWithoutPassword;
     } catch (error) {
         logger.error(error, "Error during login");

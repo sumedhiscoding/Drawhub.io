@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { hashPassword } from '../utils/hashing.js';
 import validateUser from '../utils/validator.js';
-import createUserInDatabase from '../controllers/register.js';
+import registerUser from '../controllers/register.js';
 import loginUser from '../controllers/login.js';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
@@ -13,15 +13,14 @@ router.post('/register', validateUser, async (req, res) => {
 		const { name, email, password } = req.body;
 		const hashedPassword = await hashPassword(password);
 		logger.info(`Registering user: ${name}, ${email}, ${hashedPassword}`);
-		const user = await createUserInDatabase(name, email, hashedPassword);
+		const user = await registerUser(name, email, hashedPassword);
 		logger.info(`User registered successfully: ${user}`);
 		res.status(201).json({ message: 'User registered successfully' });
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		logger.error(error, "Error registering user");
+		return res.status(500).json({ error: error.message });
 	}
 })
-
-
 router.post('/login', async (req, res) => {
 	try {
 		const { email, password } = req.body;
@@ -31,7 +30,6 @@ router.post('/login', async (req, res) => {
 				message: 'Email and password are required' 
 			});
 		}
-		
 		const user = await loginUser(email, password);
 		
 		if (!user) {
@@ -58,11 +56,13 @@ router.post('/login', async (req, res) => {
 		});
 	}
 });
-
-
-
 router.get('/profile', passport.authenticate('jwt', { session: false }), (req, res) => {
-  res.send(req.user);
+	try {
+		return res.json(req.user);
+	} catch (error) {
+		logger.error(error, "Error getting profile");
+		return res.status(500).json({ error: error.message });
+	}
 });
 
 export default router;
