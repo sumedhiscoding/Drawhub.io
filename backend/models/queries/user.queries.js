@@ -1,7 +1,7 @@
 import { sql } from 'slonik';
 
 export const findUserById = (id) => sql.unsafe`
-  SELECT id, email, name
+  SELECT id, email, name, password, created_at, updated_at
   FROM users
   WHERE id = ${id}
 `;
@@ -18,9 +18,31 @@ export const findUserByEmail = (email) => sql.unsafe`
   WHERE email = ${email}
 `;
 
-export const updateUser = ({ id, email, name }) => sql.unsafe`
+export const updateUser = ({ id, email, name }) => {
+  const updates = [];
+  if (email !== undefined) updates.push(sql.unsafe`email = ${email}`);
+  if (name !== undefined) updates.push(sql.unsafe`name = ${name}`);
+  updates.push(sql.unsafe`updated_at = now()`);
+  
+  return sql.unsafe`
+    UPDATE users
+    SET ${sql.join(updates, sql.unsafe`, `)}
+    WHERE id = ${id}
+    RETURNING id, email, name, created_at, updated_at
+  `;
+};
+
+export const getAllUsers = (from = 0, to = 10, orderBy = 'name', order = 'ASC') => sql.unsafe`
+  SELECT id, email, name, created_at, updated_at
+  FROM users
+  ORDER BY ${sql.identifier([orderBy])} ${sql.raw(order)}
+  LIMIT ${to - from}
+  OFFSET ${from}
+`;
+
+export const updateUserPassword = ({ id, password }) => sql.unsafe`
   UPDATE users
-  SET email = ${email}, name = ${name}, updated_at = now()
+  SET password = ${password}, updated_at = now()
   WHERE id = ${id}
   RETURNING id, email, name, updated_at
 `;
@@ -28,14 +50,20 @@ export const updateUser = ({ id, email, name }) => sql.unsafe`
 export const deleteUser = (id) => sql.unsafe`
   DELETE FROM users
   WHERE id = ${id}
+  RETURNING id
 `;
 
-export const getAllUsers = (from = 0, to = 10 , orderBy = 'name', order = 'ASC') => sql.unsafe`
-  SELECT id, email, name
+export const countUsers = () => sql.unsafe`
+  SELECT COUNT(*) as total
   FROM users
-  ORDER BY ${orderBy} ${order}
+`;
+
+export const searchUsers = (searchTerm, from = 0, to = 10) => sql.unsafe`
+  SELECT id, email, name, created_at, updated_at
+  FROM users
+  WHERE name ILIKE ${'%' + searchTerm + '%'} OR email ILIKE ${'%' + searchTerm + '%'}
+  ORDER BY name ASC
   LIMIT ${to - from}
   OFFSET ${from}
 `;
-
 

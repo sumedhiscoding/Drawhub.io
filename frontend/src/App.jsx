@@ -1,20 +1,23 @@
-import React, { useEffect, useRef } from "react";
-import rough from "roughjs";
-import Board from "./components/Board";
-import BoardProvider from "./store/board/BoardProvider.jsx";
-import ToolBoxProvider from "./store/board/ToolBoxProvider.jsx";
-import Toolbox from "./components/Toolbox/index.jsx";
-import Toolbar from "./components/Toolbar";
+import React from "react";
+import { Routes, Route } from "react-router";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
+import Canvas from "./pages/Canvas";
+
 const App = () => {
   return (
     <>
-      <BoardProvider>
-        <ToolBoxProvider> 
-        <Toolbar />
-        <Board />
-        <Toolbox />
-      </ToolBoxProvider>
-      </BoardProvider>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/canvas/:id" element={<Canvas />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </>
   );
 };

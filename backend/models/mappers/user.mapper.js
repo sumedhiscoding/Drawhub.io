@@ -7,4 +7,9 @@ export const mapUserRow = (row) => ({
     password: row.password,
 });
 
+export const mapUserRowWithoutPassword = (row) => {
+    const { password, ...user } = mapUserRow(row);
+    return user;
+};
+
 export default mapUserRow;

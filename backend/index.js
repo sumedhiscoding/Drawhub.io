@@ -1,26 +1,11 @@
-import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
-import helmet from 'helmet';
 import connectDatabase from './config/db.js';
-import auth from './routes/authRoutes.js';
-import './utils/passport.js'; // Initialize passport strategies
-import pinoHttp from "pino-http";
 import logger from './config/logger.js';
-
-
+import app from './app.js';
 
 dotenv.config();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(helmet());
-
-
-app.use(pinoHttp({ logger }));
-
-
+// Connect to database
 connectDatabase().then(() => {  
   logger.info("Database connection established successfully.");
 }).catch((err) => {
@@ -28,18 +13,8 @@ connectDatabase().then(() => {
   process.exit(1);
 });
 
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-
-
-app.use('/auth',auth);
-
+// Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log('Server is running on port 3000');
+  logger.info(`Server is running on port ${PORT}`);
 });
-
-
-
