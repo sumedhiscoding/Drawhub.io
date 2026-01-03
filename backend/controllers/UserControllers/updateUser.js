@@ -7,10 +7,10 @@ const updateUserController = async (id, { name, email }) => {
     try {
         const pool = await connectDatabase();
         
-        // Check if email is being changed and if it's already taken
-        if (email) {
+        // Check if email is being changed and if it's already taken by another user
+        if (email !== undefined) {
             const existingUser = await pool.maybeOne(findUserByEmail(email));
-            if (existingUser && existingUser.id !== id) {
+            if (existingUser && existingUser.id !== parseInt(id)) {
                 throw new Error('Email already in use');
             }
         }

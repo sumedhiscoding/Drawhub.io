@@ -1,14 +1,16 @@
-import React, { act, useEffect, useLayoutEffect, useRef } from "react";
+import React, {  useEffect, useLayoutEffect, useRef } from "react";
 import rough from "roughjs";
 import { BoardContext } from "../../store/board/board-context";
+import { useParams } from "react-router";
 import { TOOL_ACTION_TYPE, TOOLS } from "../../utils/constants";
 import toolboxContext from "../../store/board/toolbar-context";
-import { Textarea } from "@/components/ui/textarea"
+import axios from "axios";
+import { Textarea } from "@/components/ui/textarea";
 
 const Board = () => {
   const canvasRef = useRef(null);
   const textAreaRef = useRef(null);
-
+  const { id: canvasId } = useParams(); // Get canvas ID from URL
   const {
     elements,
     activeTool,
@@ -71,6 +73,28 @@ const Board = () => {
       }, 0);
     }
   }, [ToolActionType]);
+
+
+  useEffect(()=>{
+    const payload={
+      elements: elements
+    };
+    if (!canvasId) {
+      return;
+    }
+    const token = localStorage.getItem("token");
+    axios.put(`${import.meta.env.VITE_API_URL}/canvas/update/${canvasId}`, payload ,{
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }).then((response)=>{
+      console.log("response", response);
+    }).catch((error)=>{
+      console.log("error", error);
+    });
+  }, [elements]);
+
+
 
   const handleMouseDown = (event) => {
     if (ToolActionType === TOOL_ACTION_TYPE.WRITE) {

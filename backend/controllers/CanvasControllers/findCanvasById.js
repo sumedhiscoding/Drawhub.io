@@ -10,7 +10,7 @@ export const findCanvasById = async (id) => {
         const canvas = await pool.one(findCanvasByIdQuery(id));
         return mapCanvasRow(canvas);
     } catch (error) {
-        if (error instanceof NotFoundError) {
+        if (error instanceof NotFoundError || error.code === 'ERR_UNHANDLED_ERROR' || error.message?.includes('no rows')) {
             return null;
         }
         logger.error(error, "Error finding canvas by id");

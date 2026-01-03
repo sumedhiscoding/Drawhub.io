@@ -31,7 +31,7 @@ const Dashboard = () => {
   const fetchCanvases = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:4000/canvas/get-all-by-owner-id", {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/canvas/get-all-by-owner-id`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -52,7 +52,7 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:4000/canvas/create",
+        `${import.meta.env.VITE_API_URL}/canvas/create`,
         {
           name: newCanvasName.trim(),
         },

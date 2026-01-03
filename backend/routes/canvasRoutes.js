@@ -15,7 +15,7 @@ router.use(passport.authenticate('jwt', { session: false }));
 
 router.post('/create', async (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, description, shared_with_ids, elements, background_color, background_image_url } = req.body;
         
         if (!name || !name.trim()) {
             return res.status(400).json({ error: 'Canvas name is required' });
@@ -23,7 +23,13 @@ router.post('/create', async (req, res) => {
         
         // Use authenticated user's ID as owner_id
         const owner_id = req.user.id;
-        const canvas = await createCanvas(name.trim(), owner_id);
+        const canvas = await createCanvas(name.trim(), owner_id, {
+            description,
+            shared_with_ids,
+            elements,
+            background_color,
+            background_image_url
+        });
         return res.status(201).json({ message: 'Canvas created successfully', canvas });
     } catch (error) {
         logger.error(error, "Error creating canvas");
@@ -82,11 +88,12 @@ router.get('/get-all-by-shared-with-ids', async (req, res) => {
 });
 
 router.put('/update/:id', async (req, res) => {
+ 
     try {
         const { id } = req.params;
         const { name, description, shared_with_ids, elements, background_color, background_image_url } = req.body;
         const owner_id = req.user.id;
-        
+        console.log(name, description, shared_with_ids, elements, background_color, background_image_url);
         // Build update object with only provided fields
         const updateData = {};
         if (name !== undefined) updateData.name = name;
@@ -95,7 +102,7 @@ router.put('/update/:id', async (req, res) => {
         if (elements !== undefined) updateData.elements = elements;
         if (background_color !== undefined) updateData.background_color = background_color;
         if (background_image_url !== undefined) updateData.background_image_url = background_image_url;
-        
+        console.log(updateData);
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({ error: 'At least one field must be provided for update' });
         }

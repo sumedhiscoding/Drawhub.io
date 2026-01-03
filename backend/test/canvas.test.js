@@ -94,6 +94,7 @@ describe('Canvas API', () => {
 
         it('should create canvas with shared users', async () => {
             // Create another user to share with
+            let otherUserId;
             const otherUser = await request(app)
                 .post('/auth/register')
                 .send({
@@ -102,9 +103,22 @@ describe('Canvas API', () => {
                     password: 'Test@1234'
                 });
 
+            if (otherUser.status === 201 && otherUser.body.user) {
+                otherUserId = otherUser.body.user.id;
+            } else {
+                // If registration failed (user exists), login to get user ID
+                const otherLogin = await request(app)
+                    .post('/auth/login')
+                    .send({
+                        email: 'othercanvas@example.com',
+                        password: 'Test@1234'
+                    });
+                otherUserId = otherLogin.body.user.id;
+            }
+
             const canvasData = {
                 ...testCanvasData,
-                shared_with_ids: [otherUser.body.user.id]
+                shared_with_ids: [otherUserId]
             };
 
             const response = await request(app)
@@ -113,7 +127,7 @@ describe('Canvas API', () => {
                 .send(canvasData)
                 .expect(201);
 
-            expect(response.body.canvas.shared_with_ids).toContain(otherUser.body.user.id);
+            expect(response.body.canvas.shared_with_ids).toContain(otherUserId);
         });
 
         it('should return 401 without authentication token', async () => {
@@ -275,7 +289,17 @@ describe('Canvas API', () => {
     });
 
     describe('GET /canvas/get-all-by-shared-with-ids', () => {
+        let sharedUserId;
+        
         beforeEach(async () => {
+            // Clean up shared user if exists
+            try {
+                await pool.query(sql.unsafe`DELETE FROM canvas WHERE owner_id IN (SELECT id FROM users WHERE email = 'shareduser@example.com')`);
+                await pool.query(sql.unsafe`DELETE FROM users WHERE email = 'shareduser@example.com'`);
+            } catch (error) {
+                // Ignore cleanup errors
+            }
+
             // Create another user
             const otherUser = await request(app)
                 .post('/auth/register')
@@ -285,12 +309,23 @@ describe('Canvas API', () => {
                     password: 'Test@1234'
                 });
 
-            const otherLogin = await request(app)
-                .post('/auth/login')
-                .send({
-                    email: 'shareduser@example.com',
-                    password: 'Test@1234'
-                });
+            // Get user ID from registration or login
+            if (otherUser.status === 201 && otherUser.body && otherUser.body.user) {
+                sharedUserId = otherUser.body.user.id;
+            } else {
+                // If registration failed (user exists), login to get user ID
+                const otherLogin = await request(app)
+                    .post('/auth/login')
+                    .send({
+                        email: 'shareduser@example.com',
+                        password: 'Test@1234'
+                    });
+                if (otherLogin.status === 200 && otherLogin.body && otherLogin.body.user) {
+                    sharedUserId = otherLogin.body.user.id;
+                } else {
+                    throw new Error('Failed to get shared user ID');
+                }
+            }
 
             // Create a canvas shared with the other user
             await request(app)
@@ -299,7 +334,7 @@ describe('Canvas API', () => {
                 .send({
                     ...testCanvasData,
                     name: 'Shared Canvas',
-                    shared_with_ids: [otherUser.body.user.id]
+                    shared_with_ids: [sharedUserId]
                 });
 
             // Create a canvas not shared

@@ -19,7 +19,6 @@ app.use(cors());
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(pinoHttp({ logger }));
 
 // Routes
 app.use('/auth', auth);
