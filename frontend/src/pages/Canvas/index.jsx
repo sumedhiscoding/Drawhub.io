@@ -4,7 +4,7 @@ import ToolBoxProvider from "../../store/board/ToolBoxProvider";
 import Toolbar from "../../components/Toolbar";
 import Board from "../../components/Board";
 import Toolbox from "../../components/Toolbox";
-
+import GoliveTool from "../../components/GoLiveTool/GoliveTool";
 export default function Canvas() {
   return (
     <BoardProvider>
@@ -12,6 +12,7 @@ export default function Canvas() {
         <Toolbar />
         <Board />
         <Toolbox />
+        <GoliveTool />
       </ToolBoxProvider>
     </BoardProvider>
   );

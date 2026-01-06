@@ -18,6 +18,17 @@ export const findUserByEmail = (email) => sql.unsafe`
   WHERE email = ${email}
 `;
 
+export const findUsersByIds = (userIds) => {
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return sql.unsafe`SELECT id, email, name, created_at, updated_at FROM users WHERE false`;
+  }
+  return sql.unsafe`
+    SELECT id, email, name, created_at, updated_at
+    FROM users
+    WHERE id = ANY(${sql.array(userIds, 'int4')})
+  `;
+};
+
 export const updateUser = ({ id, email, name }) => {
   const updates = [];
   if (email !== undefined) updates.push(sql.unsafe`email = ${email}`);
@@ -66,4 +77,3 @@ export const searchUsers = (searchTerm, from = 0, to = 10) => sql.unsafe`
   LIMIT ${to - from}
   OFFSET ${from}
 `;
-

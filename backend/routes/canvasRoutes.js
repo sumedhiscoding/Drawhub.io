@@ -7,6 +7,9 @@ import {findAllCanvases} from '../controllers/CanvasControllers/findAllCanvases.
 import {findAllCanvasesByOwnerId} from '../controllers/CanvasControllers/findAllCanvasesByOwnerId.js';
 import {findAllCanvasesBySharedWithIds} from '../controllers/CanvasControllers/findAllCanvasesBySharedWithIds.js';
 import {updateCanvas} from '../controllers/CanvasControllers/updateCanvas.js';
+import { deleteCanvas } from '../controllers/CanvasControllers/deleteCanvas.js';
+import { shareCanvas } from '../controllers/CanvasControllers/shareCanvas.js';
+import { getSharedUsers } from '../controllers/CanvasControllers/getSharedUsers.js';
 
 const router = Router();
 
@@ -40,10 +43,20 @@ router.post('/create', async (req, res) => {
 router.get('/get/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        const userId = req.user.id;
         const canvas = await findCanvasById(id);
         if (!canvas) {
             return res.status(404).json({ error: 'Canvas not found' });
         }
+        
+        // Check if user has access (owner or shared with)
+        const isOwner = canvas.owner_id === userId;
+        const isShared = canvas.shared_with_ids && canvas.shared_with_ids.includes(userId);
+        
+        if (!isOwner && !isShared) {
+            return res.status(403).json({ error: 'You do not have access to this canvas' });
+        }
+        
         return res.status(200).json({ message: 'Canvas fetched successfully', canvas });
     } catch (error) {
         logger.error(error, "Error fetching canvas");
@@ -114,6 +127,80 @@ router.put('/update/:id', async (req, res) => {
         if (error.message.includes('permission')) {
             return res.status(403).json({ error: error.message });
         }
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.delete('/delete/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const owner_id = req.user.id;
+
+        const deleted = await deleteCanvas(id, owner_id);
+        if(!deleted){
+            return res.status(404).json({ error: 'Canvas not found' });
+        }
+        return res.status(200).json({ message: 'Canvas deleted successfully', deleted });
+    } catch (error) {
+        logger.error(error, "Error deleting canvas");
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/share/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { email } = req.body;
+        const ownerId = req.user.id;
+        
+        if (!email || !email.trim()) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+        
+        const result = await shareCanvas(id, ownerId, email.trim());
+        return res.status(200).json({ 
+            message: 'Canvas shared successfully', 
+            canvas: result.canvas,
+            sharedUser: result.sharedUser
+        });
+    } catch (error) {
+        logger.error(error, "Error sharing canvas");
+        if (error.message.includes('not found') || error.message.includes('permission') || error.message.includes('already shared') || error.message.includes('yourself')) {
+            return res.status(400).json({ error: error.message });
+        }
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/shared-users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        const canvas = await findCanvasById(id);
+        
+        if (!canvas) {
+            return res.status(404).json({ error: 'Canvas not found' });
+        }
+        
+        // Check if user has access (owner or shared with)
+        const isOwner = canvas.owner_id === userId;
+        const isShared = canvas.shared_with_ids && canvas.shared_with_ids.includes(userId);
+        
+        if (!isOwner && !isShared) {
+            return res.status(403).json({ error: 'You do not have access to this canvas' });
+        }
+        
+        // Only owner can see shared users list
+        if (!isOwner) {
+            return res.status(403).json({ error: 'Only the owner can view shared users' });
+        }
+        
+        const sharedUserIds = canvas.shared_with_ids || [];
+        const sharedUsers = await getSharedUsers(sharedUserIds);
+        
+        return res.status(200).json({ message: 'Shared users fetched successfully', sharedUsers });
+    } catch (error) {
+        logger.error(error, "Error fetching shared users");
         return res.status(500).json({ error: error.message });
     }
 });

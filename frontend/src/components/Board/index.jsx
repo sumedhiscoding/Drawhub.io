@@ -11,6 +11,7 @@ const Board = () => {
   const canvasRef = useRef(null);
   const textAreaRef = useRef(null);
   const { id: canvasId } = useParams(); // Get canvas ID from URL
+  const isInitialLoad = useRef(true);
   const {
     elements,
     activeTool,
@@ -36,6 +37,30 @@ const Board = () => {
   }, []);
 
   useLayoutEffect(() => {
+    const updateCanvas = async () => {
+      if (!canvasId || isInitialLoad.current) {
+        return;
+      }
+      const payload = {
+        elements: elements,
+      };
+      const token = localStorage.getItem("token");
+      try {
+        const response = await axios.put(
+          `${import.meta.env.VITE_API_URL}/canvas/update/${canvasId}`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log("response", response);
+      } catch (error) {
+        console.log("error", error);
+      }
+    };
+    const timeoutId = setTimeout(updateCanvas, 400);
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     context.save();
@@ -63,8 +88,9 @@ const Board = () => {
 
     return () => {
       context.clearRect(0, 0, canvas.width, canvas.height);
+      clearTimeout(timeoutId);
     };
-  }, [elements]);
+  }, [elements, canvasId]);
 
   useEffect(() => {
     if (ToolActionType === TOOL_ACTION_TYPE.WRITE && textAreaRef.current) {
@@ -76,24 +102,27 @@ const Board = () => {
 
 
   useEffect(()=>{
-    const payload={
-      elements: elements
+    const fetchCanvas = async( )=>{
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/canvas/get/${canvasId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.status === 200) {
+        dispatchBoardAction({
+          type: ALLOWED_METHODS.SET_ELEMENTS,
+          payload: response.data.canvas.elements,
+        });
+        setTimeout(() => {
+          isInitialLoad.current = false;
+        }, 100);
+      }
     };
-    if (!canvasId) {
-      return;
+    if(canvasId) {
+      fetchCanvas();
     }
-    const token = localStorage.getItem("token");
-    axios.put(`${import.meta.env.VITE_API_URL}/canvas/update/${canvasId}`, payload ,{
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }).then((response)=>{
-      console.log("response", response);
-    }).catch((error)=>{
-      console.log("error", error);
-    });
-  }, [elements]);
-
+  },[canvasId])
 
 
   const handleMouseDown = (event) => {

@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import Canvas from "./pages/Canvas";
+import { Toaster } from "@/components/ui/sonner";
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
         <Route path="/canvas/:id" element={<Canvas />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Toaster />
     </>
   );
 };

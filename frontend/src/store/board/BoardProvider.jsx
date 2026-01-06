@@ -248,6 +248,12 @@ const BoardReducer = (state, action) => {
         elements: state.history[newIndex] || [],
       };
     }
+    case ALLOWED_METHODS.SET_ELEMENTS:{
+      return {
+        ...state,
+        elements: action.payload,
+      };
+    }
     default:
       return state;
   }

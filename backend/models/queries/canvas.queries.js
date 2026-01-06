@@ -79,3 +79,10 @@ export const findAllCanvasesBySharedWithIdsQuery = (user_id) => sql.unsafe`
     FROM canvas
     WHERE ${user_id} = ANY(shared_with_ids)
 `;
+
+export const deleteCanvasQuery = (id,owner_id) => sql.unsafe`
+    DELETE FROM canvas
+    WHERE id = ${id}
+    AND owner_id = ${owner_id}
+    RETURNING id, name, description, owner_id, shared_with_ids, elements, background_color, background_image_url, created_at, updated_at
+`;

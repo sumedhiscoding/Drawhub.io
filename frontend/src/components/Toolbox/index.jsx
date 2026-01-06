@@ -88,7 +88,7 @@ const Toolbox = () => {
       <div className="toolbox">
         <Accordion type="multiple" defaultValue={["stroke-color", "stroke-width"]} className="w-full">
           <AccordionItem value="stroke-color">
-            <AccordionTrigger className="toolbox-h4 py-2">
+            <AccordionTrigger className="toolbox-h4 py-2 w-60">
               Stroke Color
             </AccordionTrigger>
             <AccordionContent>
