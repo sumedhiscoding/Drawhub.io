@@ -10,16 +10,17 @@
   .toolbox-color-btn:hover {
     @apply scale-125 z-10 shadow-xl;
     border-width: 2px;
+    background-color: hsl(var(--foreground));
     border-color: hsl(var(--primary));
   }
   .toolbar {
     @apply absolute top-0 z-50 flex justify-center items-center left-[calc(50vw-(15vw/2))] py-2;
   }
   .toolbar-buttons {
-    @apply shadow-xl py-2 rounded-xl bg-card border border-border flex justify-between items-center;
+    @apply shadow-xl py-1 rounded-xl bg-card border border-border flex justify-between items-center;
   }
   .toolbar-button {
-    @apply mx-1 px-3 py-3 rounded-xl text-foreground hover:bg-accent transition-colors;
+    @apply mx-1 px-3 py-3 rounded-xl text-foreground hover:bg-accent hover:text-primary transition-colors;
   }
   .toolbar-button-active {
     @apply bg-primary text-primary-foreground;
@@ -237,4 +238,36 @@
 
   }
 
+}
+
+/* Modern Scrollbar Styles */
+@layer components {
+  .modern-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  .modern-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .modern-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+  }
+
+  .modern-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  .modern-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  .modern-scrollbar::-webkit-scrollbar-thumb:active {
+    background: hsl(var(--primary) / 0.7);
+  }
 }

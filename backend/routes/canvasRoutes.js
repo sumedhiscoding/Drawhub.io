@@ -10,6 +10,7 @@ import {updateCanvas} from '../controllers/CanvasControllers/updateCanvas.js';
 import { deleteCanvas } from '../controllers/CanvasControllers/deleteCanvas.js';
 import { shareCanvas } from '../controllers/CanvasControllers/shareCanvas.js';
 import { getSharedUsers } from '../controllers/CanvasControllers/getSharedUsers.js';
+import { removeAccess } from '../controllers/CanvasControllers/removeAccess.js';
 
 const router = Router();
 
@@ -119,7 +120,6 @@ router.put('/update/:id', async (req, res) => {
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({ error: 'At least one field must be provided for update' });
         }
-        
         const canvas = await updateCanvas(id, owner_id, updateData);
         return res.status(200).json({ message: 'Canvas updated successfully', canvas });
     } catch (error) {
@@ -201,6 +201,31 @@ router.get('/shared-users/:id', async (req, res) => {
         return res.status(200).json({ message: 'Shared users fetched successfully', sharedUsers });
     } catch (error) {
         logger.error(error, "Error fetching shared users");
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.delete('/remove-access/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userId } = req.body;
+        const ownerId = req.user.id;
+        
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        
+        const result = await removeAccess(id, ownerId, userId);
+        return res.status(200).json({ 
+            message: 'Access removed successfully', 
+            canvas: result.canvas,
+            removedUser: result.removedUser
+        });
+    } catch (error) {
+        logger.error(error, "Error removing access");
+        if (error.message.includes('not found') || error.message.includes('permission') || error.message.includes('does not have access')) {
+            return res.status(400).json({ error: error.message });
+        }
         return res.status(500).json({ error: error.message });
     }
 });

@@ -1,17 +1,20 @@
-import React, {  useEffect, useLayoutEffect, useRef } from "react";
-import rough from "roughjs";
+import React, { useRef } from "react";
 import { BoardContext } from "../../store/board/board-context";
 import { useParams } from "react-router";
 import { TOOL_ACTION_TYPE, TOOLS } from "../../utils/constants";
 import toolboxContext from "../../store/board/toolbar-context";
-import axios from "axios";
 import { Textarea } from "@/components/ui/textarea";
+import { useCanvasSetup } from "../../hooks/useCanvasSetup";
+import { useCanvasFetch } from "../../hooks/useCanvasFetch";
+import { useCanvasUpdate } from "../../hooks/useCanvasUpdate";
+import { useCanvasDraw } from "../../hooks/useCanvasDraw";
+import { useTextAreaFocus } from "../../hooks/useTextAreaFocus";
 
 const Board = () => {
   const canvasRef = useRef(null);
   const textAreaRef = useRef(null);
-  const { id: canvasId } = useParams(); // Get canvas ID from URL
-  const isInitialLoad = useRef(true);
+  const { id: canvasId } = useParams();
+  
   const {
     elements,
     activeTool,
@@ -22,108 +25,24 @@ const Board = () => {
 
   const { toolBoxState } = React.useContext(toolboxContext);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    canvas.style.width = `${window.innerWidth}px`;
-    canvas.style.height = `${window.innerHeight}px`;
-    const context = canvas.getContext("2d");
-    context.setTransform(1, 0, 0, 1, 0, 0); // Reset any existing transforms
-    context.scale(dpr, dpr); // Scale for high-DPI
-    canvas.style.backgroundColor = "#fdfdfd";
-    return () => {};
-  }, []);
+  // Setup canvas with window size
+  useCanvasSetup(canvasRef);
 
-  useLayoutEffect(() => {
-    const updateCanvas = async () => {
-      if (!canvasId || isInitialLoad.current) {
-        return;
-      }
-      const payload = {
-        elements: elements,
-      };
-      const token = localStorage.getItem("token");
-      try {
-        const response = await axios.put(
-          `${import.meta.env.VITE_API_URL}/canvas/update/${canvasId}`,
-          payload,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log("response", response);
-      } catch (error) {
-        console.log("error", error);
-      }
-    };
-    const timeoutId = setTimeout(updateCanvas, 400);
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    context.save();
-    const rc = rough.canvas(canvas);
-    elements.forEach((element) => {
-      if (element?.type == TOOLS.TEXT.id) {
-        context.textBaseline = "top";
-        context.font = `${element.fontSize}px Arial`;
-        context.fillStyle = element.color;
-        context.fillText(element.text, element.left, element.top);
-        context.restore();
-        return;
-      } else if (element.type === TOOLS.PENCIL.id) {
-        console.log("Drawing pencil element", element);
-        const drawingPath = element.roughElement;
-        const myPath = new Path2D(drawingPath);
-        context.fillStyle = element.color || '#000';
-        context.fill(myPath);
-        context.restore();
-        return;
-      } else {
-        rc.draw(element.roughElement);
-      }
-    });
+  // Fetch canvas data
+  const isInitialLoad = useCanvasFetch(
+    canvasId,
+    dispatchBoardAction,
+    ALLOWED_METHODS
+  );
 
-    return () => {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      clearTimeout(timeoutId);
-    };
-  }, [elements, canvasId]);
+  // Update canvas with debouncing
+  useCanvasUpdate(canvasId, elements, isInitialLoad);
 
-  useEffect(() => {
-    if (ToolActionType === TOOL_ACTION_TYPE.WRITE && textAreaRef.current) {
-      setTimeout(() => {
-        textAreaRef.current.focus();
-      }, 0);
-    }
-  }, [ToolActionType]);
+  // Draw elements on canvas
+  useCanvasDraw(canvasRef, elements);
 
-
-  useEffect(()=>{
-    const fetchCanvas = async( )=>{
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/canvas/get/${canvasId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.status === 200) {
-        dispatchBoardAction({
-          type: ALLOWED_METHODS.SET_ELEMENTS,
-          payload: response.data.canvas.elements,
-        });
-        setTimeout(() => {
-          isInitialLoad.current = false;
-        }, 100);
-      }
-    };
-    if(canvasId) {
-      fetchCanvas();
-    }
-  },[canvasId])
-
+  // Focus textarea when in WRITE mode
+  useTextAreaFocus(textAreaRef, ToolActionType);
 
   const handleMouseDown = (event) => {
     if (ToolActionType === TOOL_ACTION_TYPE.WRITE) {

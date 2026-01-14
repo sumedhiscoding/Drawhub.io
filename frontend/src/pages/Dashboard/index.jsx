@@ -15,7 +15,9 @@ import { toast } from "sonner";
 
 const Dashboard = () => {
   const [canvases, setCanvases] = useState([]);
+  const [sharedCanvases, setSharedCanvases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingShared, setLoadingShared] = useState(true);
   const [user, setUser] = useState(null);
   const [newCanvasName, setNewCanvasName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -33,6 +35,7 @@ const Dashboard = () => {
 
     setUser(JSON.parse(userData));
     fetchCanvases();
+    fetchSharedCanvases();
   }, [navigate]);
 
   const fetchCanvases = async () => {
@@ -51,6 +54,26 @@ const Dashboard = () => {
       console.error("Error fetching canvases:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSharedCanvases = async () => {
+    try {
+      setLoadingShared(true);
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/canvas/get-all-by-shared-with-ids`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setSharedCanvases(response.data.canvases || []);
+    } catch (error) {
+      console.error("Error fetching shared canvases:", error);
+    } finally {
+      setLoadingShared(false);
     }
   };
 
@@ -129,6 +152,50 @@ const Dashboard = () => {
     );
   }
 
+  const renderCanvasCard = (canvas, isShared = false) => (
+    <Card
+      key={canvas.id}
+      className="hover:shadow-xl transition-all border-border hover:border-primary/50"
+    >
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl flex items-center justify-between">
+          <span>{canvas.name}</span>
+          {!isShared && (
+            <Button
+              variant="outline"
+              className="bg-red-700/70 h-9 text-white hover:bg-red-800/70 hover:text-white cursor-pointer"
+              onClick={() => handleDeleteCanvas(canvas.id)}
+            >
+              <Trash2 className="h-4 w-4 text-white" />
+            </Button>
+          )}
+        </CardTitle>
+        <CardDescription className="text-sm">
+          {isShared ? (
+            <>
+              Shared with you • Created {new Date(canvas.created_at).toLocaleDateString()}
+            </>
+          ) : (
+            <>
+              Created {new Date(canvas.created_at).toLocaleDateString()}
+            </>
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button asChild className="w-full h-10">
+          <Link to={`/canvas/${canvas.id}`}>Open Canvas</Link>
+        </Button>
+        {!isShared && canvas.shared_with_ids?.length > 0 && (
+          <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Share2 className="h-3.5 w-3.5" />
+            Shared with {canvas.shared_with_ids.length} user(s)
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -178,7 +245,7 @@ const Dashboard = () => {
         </Card>
 
         {/* My Canvases */}
-        <div>
+        <div className="mb-8">
           <h2 className="text-3xl font-bold mb-5 text-foreground">
             My Canvases
           </h2>
@@ -196,39 +263,38 @@ const Dashboard = () => {
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {canvases.map((canvas) => (
-                <Card
-                  key={canvas.id}
-                  className="hover:shadow-xl transition-all border-border hover:border-primary/50"
-                >
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-xl flex items-center justify-between">
-                      <span>{canvas.name}</span>
-                      <Button
-                        variant="outline"
-                        className="bg-red-700/70 h-9 text-white hover:bg-red-800/70 hover:text-white cursor-pointer"
-                        onClick={() => handleDeleteCanvas(canvas.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-white" />
-                      </Button>
-                    </CardTitle>
-                    <CardDescription className="text-sm">
-                      Created {new Date(canvas.createdAt).toLocaleDateString()}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button asChild className="w-full h-10">
-                      <Link to={`/canvas/${canvas.id}`}>Open Canvas</Link>
-                    </Button>
-                    {canvas.shared_with_ids?.length > 0 && (
-                      <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Share2 className="h-3.5 w-3.5" />
-                        Shared with {canvas.shared_with_ids.length} user(s)
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+              {canvases.map((canvas) => renderCanvasCard(canvas, false))}
+            </div>
+          )}
+        </div>
+
+        {/* Shared with Me */}
+        <div>
+          <h2 className="text-3xl font-bold mb-5 text-foreground">
+            Shared with Me
+          </h2>
+          {loadingShared ? (
+            <Card className="border-border">
+              <CardContent className="py-14 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-muted-foreground text-sm">Loading shared canvases...</p>
+              </CardContent>
+            </Card>
+          ) : sharedCanvases.length === 0 ? (
+            <Card className="border-border">
+              <CardContent className="py-14 text-center">
+                <Share2 className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
+                <p className="text-foreground mb-3 text-base">
+                  No shared canvases yet.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Canvases shared with you will appear here.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {sharedCanvases.map((canvas) => renderCanvasCard(canvas, true))}
             </div>
           )}
         </div>

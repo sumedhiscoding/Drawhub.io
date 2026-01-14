@@ -17,11 +17,7 @@ export const createTool = (
   streamline = 0.5,
 
 ) => {
-  console.log("Creating tool:", {
-  color,
-  thinning,
-  smoothing,
-  streamline,}  )
+  
   const generator = rough.generator();
   switch (id) {
     case TOOLS.LINE.id:

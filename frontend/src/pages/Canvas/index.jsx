@@ -3,16 +3,13 @@ import BoardProvider from "../../store/board/BoardProvider";
 import ToolBoxProvider from "../../store/board/ToolBoxProvider";
 import Toolbar from "../../components/Toolbar";
 import Board from "../../components/Board";
-import Toolbox from "../../components/Toolbox";
-import GoliveTool from "../../components/GoLiveTool/GoliveTool";
+
 export default function Canvas() {
   return (
     <BoardProvider>
       <ToolBoxProvider>
         <Toolbar />
         <Board />
-        <Toolbox />
-        <GoliveTool />
       </ToolBoxProvider>
     </BoardProvider>
   );
