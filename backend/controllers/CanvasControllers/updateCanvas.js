@@ -11,7 +11,6 @@ export const updateCanvas = async (id, owner_id, updateData) => {
         if (!existingCanvas) {
             throw new Error('Canvas not found');
         }
-        logger.info(`Existing canvas: ${existingCanvas} , owner_id: ${owner_id} , updateData: ${updateData}`);
         if (existingCanvas.owner_id !== owner_id) {
             throw new Error('You do not have permission to update this canvas');
         }

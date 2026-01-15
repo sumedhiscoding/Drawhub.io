@@ -7,7 +7,6 @@ import { NotFoundError } from 'slonik';
 export const findCanvasById = async (id) => {
     try {
         const pool = await connectDatabase();
-        console.log("id", id);
         const canvas = await pool.one(findCanvasByIdQuery(id));
         return mapCanvasRow(canvas);
     } catch (error) {

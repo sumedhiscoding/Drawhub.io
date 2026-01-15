@@ -1,28 +1,33 @@
-import React from "react";
-import { BoardContext } from "./board-context.jsx";
 import {
   ALLOWED_METHODS,
-  TOOL_ACTION_TYPE,
   TOOLS,
-} from "../../utils/constants";
-import { createTool, isPointNearElement } from "../../utils/helpers.jsx";
+  TOOL_ACTION_TYPE,
+  generateElementId,
+  getLocalUserId,
+} from '../../utils/constants';
+import { createTool, isPointNearElement } from '../../utils/helpers';
+
+/**
+ * Board Reducer - SINGLE SOURCE OF TRUTH for elements
+ *
+ * Undo/Redo patches are applied here via APPLY_PATCH action.
+ * The XState history machine only tracks the diffs (before/after patches).
+ */
 const BoardReducer = (state, action) => {
   const { elements, activeTool } = state;
+
   switch (action.type) {
-    // Define reducer cases if needed in the future
     case ALLOWED_METHODS.DRAW_DOWN: {
+      const ownerId = action.payload?.ownerId || getLocalUserId();
+      const elementId = action.payload?.id || generateElementId();
+
       switch (state.activeTool) {
         case TOOLS.PENCIL: {
-          const {
-            points,
-            color,
-            strokeWidth,
-            thinning,
-            smoothing,
-            streamline,
-          } = action.payload;
+          const { points, color, strokeWidth, thinning, smoothing, streamline } = action.payload;
           const activeToolId = activeTool?.id;
           const newElement = {
+            id: elementId,
+            ownerId: ownerId,
             type: activeToolId,
             points: points,
             color: color,
@@ -40,7 +45,7 @@ const BoardReducer = (state, action) => {
               null,
               thinning,
               smoothing,
-              streamline
+              streamline,
             ),
           };
           return {
@@ -54,11 +59,11 @@ const BoardReducer = (state, action) => {
         case TOOLS.CIRCLE:
         case TOOLS.DIAMOND:
         case TOOLS.ARROW: {
-          const { x1, y1, color, strokeWidth, fill, fillStyle } =
-            action.payload;
+          const { x1, y1, color, strokeWidth, fill, fillStyle } = action.payload;
           const activeToolId = activeTool?.id;
-
           const newElement = {
+            id: elementId,
+            ownerId: ownerId,
             type: activeToolId,
             x1: x1,
             y1: y1,
@@ -77,7 +82,7 @@ const BoardReducer = (state, action) => {
               color,
               strokeWidth,
               fill,
-              fillStyle
+              fillStyle,
             ),
           };
           return {
@@ -90,24 +95,18 @@ const BoardReducer = (state, action) => {
           return { ...state, ToolActionType: TOOL_ACTION_TYPE.ERASE };
         }
         default:
-          break;
+          return state;
       }
     }
+
     case ALLOWED_METHODS.DRAW_MOVE: {
       switch (state.activeTool) {
         case TOOLS.PENCIL: {
-          const { points,color,
-            strokeWidth,
-            thinning,
-            smoothing,
-            streamline, } = action.payload;
+          const { points, color, strokeWidth, thinning, smoothing, streamline } = action.payload;
           const index = elements.length - 1 > 0 ? elements.length - 1 : 0;
           const activeToolId = activeTool?.id;
-          // Flatten the points array
           const newPoints = [...elements[index].points, ...points];
-          console.log("New Points:", color, strokeWidth, thinning, smoothing,
-              streamline);
-          
+
           const updatedElement = {
             ...elements[index],
             points: newPoints,
@@ -124,7 +123,7 @@ const BoardReducer = (state, action) => {
               elements[index]?.fillStyle,
               thinning,
               smoothing,
-              streamline
+              streamline,
             ),
           };
           const updatedElements = [...elements];
@@ -153,7 +152,7 @@ const BoardReducer = (state, action) => {
               [],
               elements[index]?.strokeWidth,
               elements[index]?.fill,
-              elements[index]?.fillStyle
+              elements[index]?.fillStyle,
             ),
           };
           const updatedElements = [...elements];
@@ -161,42 +160,43 @@ const BoardReducer = (state, action) => {
           return { ...state, elements: updatedElements };
         }
         default:
-          break;
+          return state;
       }
     }
+
     case ALLOWED_METHODS.DRAW_UP: {
-      const elementsCopy = [...state.elements];
-      const newHistory = state.history.slice(0, state.index + 1);
-      newHistory.push(elementsCopy);
       return {
         ...state,
-        history: newHistory,
-        index: newHistory.length - 1,
         ToolActionType: TOOL_ACTION_TYPE.NONE,
       };
     }
+
     case ALLOWED_METHODS.SET_ACTIVE_TOOL: {
       return { ...state, activeTool: TOOLS[action.payload.name] };
     }
+
     case ALLOWED_METHODS.SET_COLOR: {
       return { ...state, color: action.payload };
     }
+
     case ALLOWED_METHODS.CLEAR_BOARD: {
       return { ...state, elements: [] };
     }
+
     case ALLOWED_METHODS.ERASE_ELEMENT: {
       const { x1, y1 } = action.payload;
-      const filteredElements = elements.filter(
-        (element) => !isPointNearElement(x1, y1, element)
-      );
+      const filteredElements = elements.filter((element) => !isPointNearElement(x1, y1, element));
       return {
         ...state,
         elements: filteredElements,
       };
     }
+
     case ALLOWED_METHODS.ADD_TEXT: {
-      const { x1, y1, text, fontSize, color } = action.payload;
+      const { x1, y1, text, fontSize, color, id: elemId, ownerId: elemOwnerId } = action.payload;
       const updatedElement = {
+        id: elemId || generateElementId(),
+        ownerId: elemOwnerId || getLocalUserId(),
         type: activeTool.id,
         left: x1,
         top: y1,
@@ -211,107 +211,125 @@ const BoardReducer = (state, action) => {
         elements: updatedElements,
       };
     }
+
     case ALLOWED_METHODS.SAVE_TEXT: {
-      const textValue = action.payload;
+      const { text } = action.payload;
       const index = elements.length - 1 > 0 ? elements.length - 1 : 0;
       const updatedElement = {
         ...elements[index],
-        text: textValue,
+        text: text,
       };
       const updatedElements = [...elements];
       updatedElements[index] = updatedElement;
-      const newHistory = state.history.slice(0, state.index + 1);
-      newHistory.push(updatedElements);
       return {
         ...state,
-        history: newHistory,
-        index: newHistory.length - 1,
         ToolActionType: TOOL_ACTION_TYPE.NONE,
         elements: updatedElements,
       };
     }
-    case ALLOWED_METHODS.UNDO: {
-      if (state.index === 0) return state;
-      const newIndex = state.index - 1;
-      return {
-        ...state,
-        index: newIndex,
-        elements: state.history[newIndex] || [],
-      };
-    }
-    case ALLOWED_METHODS.REDO: {
-      if (state.index >= state.history.length - 1) return state;
-      const newIndex = state.index + 1;
-      return {
-        ...state,
-        index: newIndex,
-        elements: state.history[newIndex] || [],
-      };
-    }
-    case ALLOWED_METHODS.SET_ELEMENTS:{
+
+    case ALLOWED_METHODS.SET_ELEMENTS: {
       return {
         ...state,
         elements: action.payload,
       };
     }
+
+    // Remote operations - applied from socket updates
+    case ALLOWED_METHODS.REMOTE_UNDO: {
+      const { elementId } = action.payload;
+      if (!elementId) return state;
+
+      const newElements = elements.filter((e) => e.id !== elementId);
+      return {
+        ...state,
+        elements: newElements,
+      };
+    }
+
+    case ALLOWED_METHODS.REMOTE_REDO: {
+      const { element } = action.payload;
+      if (!element || !element.id) return state;
+
+      // Don't add if element already exists
+      if (elements.some((e) => e.id === element.id)) return state;
+
+      return {
+        ...state,
+        elements: [...elements, element],
+      };
+    }
+
+    /**
+     * Apply a patch from undo/redo
+     * Patch shape:
+     *   - { element: fullElement } → add/restore element
+     *   - { elementId: string } → remove element by id
+     *   - { elementId: string, updates: object } → update element properties
+     */
+    case ALLOWED_METHODS.APPLY_PATCH: {
+      const { patch, elementId } = action.payload;
+
+      if (!patch) {
+        // null patch = element is being removed (undo of add)
+        if (elementId) {
+          return {
+            ...state,
+            elements: elements.filter((e) => e.id !== elementId),
+          };
+        }
+        return state;
+      }
+
+      // If patch has full element, add/restore it
+      if (patch.element) {
+        const restoredElement = {
+          ...patch.element,
+          roughElement: createTool(
+            patch.element.type,
+            patch.element.x1 ?? 0,
+            patch.element.y1 ?? 0,
+            patch.element.x2 ?? 0,
+            patch.element.y2 ?? 0,
+            patch.element.color,
+            patch.element.points || [],
+            patch.element.strokeWidth,
+            patch.element.fill,
+            patch.element.fillStyle,
+            patch.element.thinning,
+            patch.element.smoothing,
+            patch.element.streamline,
+          ),
+        };
+        // Check if element already exists
+        const existingIndex = elements.findIndex((e) => e.id === patch.element.id);
+        if (existingIndex >= 0) {
+          // Replace existing
+          const newElements = [...elements];
+          newElements[existingIndex] = restoredElement;
+          return { ...state, elements: newElements };
+        }
+        // Add new
+        return {
+          ...state,
+          elements: [...elements, restoredElement],
+        };
+      }
+
+      // If patch has updates, apply them to the element
+      if (patch.updates && elementId) {
+        return {
+          ...state,
+          elements: elements.map((e) => (e.id === elementId ? { ...e, ...patch.updates } : e)),
+        };
+      }
+
+      return state;
+    }
+
     default:
       return state;
   }
 };
 
-
-const BoardProvider = ({ children }) => {
-  const initialBoardState = {
-    elements: [],
-    activeTool: TOOLS.LINE,
-    history: [[]],
-    index: 0,
-    color: "black",
-    strokeWidth: 1,
-    ToolActionType: TOOL_ACTION_TYPE.NONE,
-  };
-  const [BoardState, dispatchBoardAction] = React.useReducer(
-    BoardReducer,
-    initialBoardState
-  );
-
-  const setActiveTool = (tool) =>
-    dispatchBoardAction({
-      type: ALLOWED_METHODS.SET_ACTIVE_TOOL,
-      payload: {
-        name: tool,
-      },
-    });
-
-  const boardUndoHandler = () => {
-    dispatchBoardAction({
-      type: ALLOWED_METHODS.UNDO,
-    });
-  };
-  const boardRedoHandler = () => {
-    dispatchBoardAction({
-      type: ALLOWED_METHODS.REDO,
-    });
-  };
-
-  const boardContextValue = {
-    elements: BoardState.elements,
-    activeTool: BoardState.activeTool,
-    color: BoardState.color,
-    strokeWidth: BoardState.strokeWidth,
-    dispatchBoardAction,
-    ALLOWED_METHODS,
-    setActiveTool,
-    ToolActionType: BoardState.ToolActionType,
-    boardUndoHandler,
-    boardRedoHandler,
-  };
-
-  return (
-    <BoardContext.Provider value={boardContextValue}>
-      {children}
-    </BoardContext.Provider>
-  );
-};
-
-export default BoardProvider;
+export default BoardReducer;

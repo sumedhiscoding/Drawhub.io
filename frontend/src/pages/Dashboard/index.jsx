@@ -1,17 +1,11 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import axios from "axios";
-import { Plus, LogOut, PenTool, Share2, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import axios from 'axios';
+import { Plus, LogOut, PenTool, Share2, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
   const [canvases, setCanvases] = useState([]);
@@ -19,17 +13,17 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [loadingShared, setLoadingShared] = useState(true);
   const [user, setUser] = useState(null);
-  const [newCanvasName, setNewCanvasName] = useState("");
+  const [newCanvasName, setNewCanvasName] = useState('');
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check authentication
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
 
     if (!token || !userData) {
-      navigate("/login");
+      navigate('/login');
       return;
     }
 
@@ -40,18 +34,18 @@ const Dashboard = () => {
 
   const fetchCanvases = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/canvas/get-all-by-owner-id`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       setCanvases(response.data.canvases || []);
     } catch (error) {
-      console.error("Error fetching canvases:", error);
+      console.error('Error fetching canvases:', error);
     } finally {
       setLoading(false);
     }
@@ -60,18 +54,18 @@ const Dashboard = () => {
   const fetchSharedCanvases = async () => {
     try {
       setLoadingShared(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/canvas/get-all-by-shared-with-ids`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       setSharedCanvases(response.data.canvases || []);
     } catch (error) {
-      console.error("Error fetching shared canvases:", error);
+      console.error('Error fetching shared canvases:', error);
     } finally {
       setLoadingShared(false);
     }
@@ -79,35 +73,31 @@ const Dashboard = () => {
 
   const handleDeleteCanvas = async (id) => {
     try {
-      console.log("canvas id", id);
-      const token = localStorage.getItem("token");
+      console.log('canvas id', id);
+      const token = localStorage.getItem('token');
       const response = await axios.delete(`${import.meta.env.VITE_API_URL}/canvas/delete/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       fetchCanvases();
-      toast.success(response.data.message || "Canvas deleted successfully");
-    }
-    catch (error) {
-      console.error("Error deleting canvas:", error);
-      toast.error(
-        error.response?.data?.error ||
-          "Failed to delete canvas. Please try again."
-      );
+      toast.success(response.data.message || 'Canvas deleted successfully');
+    } catch (error) {
+      console.error('Error deleting canvas:', error);
+      toast.error(error.response?.data?.error || 'Failed to delete canvas. Please try again.');
     }
   };
 
   const handleCreateCanvas = async (e) => {
     e.preventDefault();
     if (!newCanvasName.trim()) {
-      toast.error("Canvas name is required");
-      return
-    };
+      toast.error('Canvas name is required');
+      return;
+    }
 
     setCreating(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/canvas/create`,
         {
@@ -117,28 +107,25 @@ const Dashboard = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
-      setNewCanvasName("");
+      setNewCanvasName('');
       fetchCanvases();
       // Navigate to the new canvas
       navigate(`/canvas/${response.data.canvas.id}`);
     } catch (error) {
-      console.error("Error creating canvas:", error);
-      toast.error(
-        error.response?.data?.error ||
-          "Failed to create canvas. Please try again."
-      );
+      console.error('Error creating canvas:', error);
+      toast.error(error.response?.data?.error || 'Failed to create canvas. Please try again.');
     } finally {
       setCreating(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
   };
 
   if (loading) {
@@ -172,13 +159,9 @@ const Dashboard = () => {
         </CardTitle>
         <CardDescription className="text-sm">
           {isShared ? (
-            <>
-              Shared with you • Created {new Date(canvas.created_at).toLocaleDateString()}
-            </>
+            <>Shared with you • Created {new Date(canvas.created_at).toLocaleDateString()}</>
           ) : (
-            <>
-              Created {new Date(canvas.created_at).toLocaleDateString()}
-            </>
+            <>Created {new Date(canvas.created_at).toLocaleDateString()}</>
           )}
         </CardDescription>
       </CardHeader>
@@ -207,9 +190,7 @@ const Dashboard = () => {
               <h1 className="text-3xl font-bold text-foreground">DrawHub</h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                Welcome, {user?.name}
-              </span>
+              <span className="text-sm text-muted-foreground">Welcome, {user?.name}</span>
               <Button variant="outline" onClick={handleLogout} className="h-9">
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
@@ -238,7 +219,7 @@ const Dashboard = () => {
               />
               <Button type="submit" disabled={creating} className="h-11 px-6">
                 <Plus className="h-4 w-4 mr-2" />
-                {creating ? "Creating..." : "Create Canvas"}
+                {creating ? 'Creating...' : 'Create Canvas'}
               </Button>
             </form>
           </CardContent>
@@ -246,16 +227,12 @@ const Dashboard = () => {
 
         {/* My Canvases */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-5 text-foreground">
-            My Canvases
-          </h2>
+          <h2 className="text-3xl font-bold mb-5 text-foreground">My Canvases</h2>
           {canvases.length === 0 ? (
             <Card className="border-border">
               <CardContent className="py-14 text-center">
                 <PenTool className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
-                <p className="text-foreground mb-3 text-base">
-                  You don't have any canvases yet.
-                </p>
+                <p className="text-foreground mb-3 text-base">You don't have any canvases yet.</p>
                 <p className="text-sm text-muted-foreground">
                   Create your first canvas to get started!
                 </p>
@@ -270,9 +247,7 @@ const Dashboard = () => {
 
         {/* Shared with Me */}
         <div>
-          <h2 className="text-3xl font-bold mb-5 text-foreground">
-            Shared with Me
-          </h2>
+          <h2 className="text-3xl font-bold mb-5 text-foreground">Shared with Me</h2>
           {loadingShared ? (
             <Card className="border-border">
               <CardContent className="py-14 text-center">
@@ -284,9 +259,7 @@ const Dashboard = () => {
             <Card className="border-border">
               <CardContent className="py-14 text-center">
                 <Share2 className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
-                <p className="text-foreground mb-3 text-base">
-                  No shared canvases yet.
-                </p>
+                <p className="text-foreground mb-3 text-base">No shared canvases yet.</p>
                 <p className="text-sm text-muted-foreground">
                   Canvases shared with you will appear here.
                 </p>

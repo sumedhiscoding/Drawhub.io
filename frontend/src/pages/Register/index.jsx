@@ -1,33 +1,33 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import axios from "axios";
-import { PenTool } from "lucide-react";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import axios from 'axios';
+import { PenTool } from 'lucide-react';
 
 const Register = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     // Validation
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError('Passwords do not match');
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setError('Password must be at least 8 characters long');
       return;
     }
 
@@ -41,13 +41,16 @@ const Register = () => {
       });
 
       // Store token and user data
-      localStorage.setItem("token", response.data.token || "");
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      localStorage.setItem('token', response.data.token || '');
+      localStorage.setItem('user', JSON.stringify(response.data.user));
 
       // Redirect to login or dashboard
-      navigate("/login");
+      navigate('/login');
     } catch (err) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.errors?.[0]?.msg || "Registration failed. Please try again.";
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.errors?.[0]?.msg ||
+        'Registration failed. Please try again.';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -74,7 +77,9 @@ const Register = () => {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-base">Full Name</Label>
+              <Label htmlFor="name" className="text-base">
+                Full Name
+              </Label>
               <Input
                 id="name"
                 type="text"
@@ -86,7 +91,9 @@ const Register = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-base">Email</Label>
+              <Label htmlFor="email" className="text-base">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -98,7 +105,9 @@ const Register = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-base">Password</Label>
+              <Label htmlFor="password" className="text-base">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -113,7 +122,9 @@ const Register = () => {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-base">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-base">
+                Confirm Password
+              </Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -125,7 +136,7 @@ const Register = () => {
               />
             </div>
             <Button type="submit" className="w-full h-11 text-base" disabled={loading}>
-              {loading ? "Creating account..." : "Create Account"}
+              {loading ? 'Creating account...' : 'Create Account'}
             </Button>
           </form>
           <div className="mt-5 text-center text-sm">
@@ -141,4 +152,3 @@ const Register = () => {
 };
 
 export default Register;
-

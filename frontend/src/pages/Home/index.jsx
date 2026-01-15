@@ -1,7 +1,7 @@
-import { Link } from "react-router";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PenTool, Users, Zap, WifiPen } from "lucide-react";
+import { Link } from 'react-router';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PenTool, Users, Zap, WifiPen } from 'lucide-react';
 const Home = () => {
   return (
     <div className="min-h-screen bg-background">
@@ -31,7 +31,8 @@ const Home = () => {
             <span className="text-primary"> Your Ideas</span>
           </h2>
           <p className="text-lg text-muted-foreground mb-6">
-            A powerful whiteboard application for teams to brainstorm, design, and work together in real-time.
+            A powerful whiteboard application for teams to brainstorm, design, and work together in
+            real-time.
           </p>
           <div className="flex gap-3 justify-center">
             <Button size="lg" asChild className="text-base px-8 py-6">
@@ -81,4 +82,3 @@ const Home = () => {
 };
 
 export default Home;
-

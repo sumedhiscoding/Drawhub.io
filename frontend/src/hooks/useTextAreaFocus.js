@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { TOOL_ACTION_TYPE } from "../utils/constants";
+import { useEffect, useRef } from 'react';
+import { TOOL_ACTION_TYPE } from '../utils/constants';
 
 /**
  * Custom hook to handle textarea focus when in WRITE mode

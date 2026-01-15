@@ -1,7 +1,7 @@
-import { Link } from "react-router";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Home } from "lucide-react";
+import { Link } from 'react-router';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Home } from 'lucide-react';
 
 const NotFound = () => {
   return (
@@ -26,4 +26,3 @@ const NotFound = () => {
 };
 
 export default NotFound;
-

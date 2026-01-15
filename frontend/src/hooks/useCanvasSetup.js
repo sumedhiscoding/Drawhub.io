@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useWindowSize } from "rooks";
+import { useEffect } from 'react';
+import { useWindowSize } from 'rooks';
 
 /**
  * Custom hook to setup canvas with proper dimensions and high-DPI support
@@ -20,10 +20,10 @@ export const useCanvasSetup = (canvasRef) => {
     canvas.height = canvasHeight * dpr;
     canvas.style.width = `${canvasWidth}px`;
     canvas.style.height = `${canvasHeight}px`;
-    
-    const context = canvas.getContext("2d");
+
+    const context = canvas.getContext('2d');
     context.setTransform(1, 0, 0, 1, 0, 0); // Reset any existing transforms
     context.scale(dpr, dpr); // Scale for high-DPI
-    canvas.style.backgroundColor = "#fdfdfd";
+    canvas.style.backgroundColor = '#fdfdfd';
   }, [innerWidth, innerHeight, canvasRef]);
 };

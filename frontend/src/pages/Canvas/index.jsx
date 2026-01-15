@@ -1,16 +1,22 @@
-import React from "react";
-import BoardProvider from "../../store/board/BoardProvider";
-import ToolBoxProvider from "../../store/board/ToolBoxProvider";
-import Toolbar from "../../components/Toolbar";
-import Board from "../../components/Board";
+import React from 'react';
+import BoardProvider from '../../store/Providers/BoardProvider';
+import ToolBoxProvider from '../../store/Providers/ToolBoxProvider';
+import CanvasActionsProvider from '../../store/Providers/CanvasActionProvider';
+import { HistoryProvider } from '../../store/History';
+import Toolbar from '../../components/Toolbar';
+import Board from '../../components/Board';
 
 export default function Canvas() {
   return (
-    <BoardProvider>
-      <ToolBoxProvider>
-        <Toolbar />
-        <Board />
-      </ToolBoxProvider>
-    </BoardProvider>
+    <HistoryProvider>
+      <BoardProvider>
+        <ToolBoxProvider>
+          <CanvasActionsProvider>
+            <Toolbar />
+            <Board />
+          </CanvasActionsProvider>
+        </ToolBoxProvider>
+      </BoardProvider>
+    </HistoryProvider>
   );
 }

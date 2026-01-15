@@ -1,8 +1,8 @@
-import { TOOLS } from "./constants";
-import {getStroke} from "perfect-freehand";
-import rough from "roughjs";
+import { TOOLS } from './constants';
+import { getStroke } from 'perfect-freehand';
+import rough from 'roughjs';
 export const createTool = (
-  id, 
+  id,
   x1,
   y1,
   x2,
@@ -15,9 +15,7 @@ export const createTool = (
   thinning = 0.5,
   smoothing = 0.5,
   streamline = 0.5,
-
 ) => {
-  
   const generator = rough.generator();
   switch (id) {
     case TOOLS.LINE.id:
@@ -59,8 +57,7 @@ export const createTool = (
       const dy = y2 - y1;
       const length = Math.sqrt(dx * dx + dy * dy);
 
-      if (length === 0)
-        return generator.line(x1, y1, x2, y2, { stroke: color, strokeWidth });
+      if (length === 0) return generator.line(x1, y1, x2, y2, { stroke: color, strokeWidth });
 
       // Unit vector
       const ux = dx / length;
@@ -84,36 +81,30 @@ export const createTool = (
           [x2, y2],
           [arrowRightX, arrowRightY],
         ],
-        { stroke: color, strokeWidth }
+        { stroke: color, strokeWidth },
       );
     }
-    case TOOLS.PENCIL.id:{
-      console.log("Creating PENCIL rough element with points:",color, points,{thinning, smoothing, streamline, size: strokeWidth,
+    case TOOLS.PENCIL.id: {
+      const stroke = getStroke(points, {
+        thinning,
+        smoothing,
+        streamline,
+        size: strokeWidth,
         start: {
-        cap: true,
-        taper: 0,
-        easing: (t) => t,
+          cap: true,
+          taper: 0,
+          easing: (t) => t,
         },
         end: {
           cap: true,
           taper: 0,
           easing: (t) => t,
-        },});
-      const stroke = getStroke(points,{thinning, smoothing, streamline, size: strokeWidth,
-        start: {
-        cap: true,
-        taper: 0,
-        easing: (t) => t,
         },
-        end: {
-          cap: true,
-          taper: 0,
-          easing: (t) => t,
-        },});
+      });
       const path = getSvgPathFromStroke(stroke);
       return path;
     }
-    case TOOLS.TEXT.id:{
+    case TOOLS.TEXT.id: {
       return null; // Text tool does not have a rough element
     }
     default:
@@ -121,23 +112,21 @@ export const createTool = (
   }
 };
 
-
 export function getSvgPathFromStroke(stroke) {
-  if (!stroke.length) return ""
+  if (!stroke.length) return '';
 
   const d = stroke.reduce(
     (acc, [x0, y0], i, arr) => {
-      const [x1, y1] = arr[(i + 1) % arr.length]
-      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2)
-      return acc
+      const [x1, y1] = arr[(i + 1) % arr.length];
+      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+      return acc;
     },
-    ["M", ...stroke[0], "Q"]
-  )
+    ['M', ...stroke[0], 'Q'],
+  );
 
-  d.push("Z")
-  return d.join(" ")
+  d.push('Z');
+  return d.join(' ');
 }
-
 
 export const isPointNearElement = (x, y, element, offset = 10) => {
   const { type, x1, y1, x2, y2, points } = element;
@@ -183,8 +172,7 @@ const isPointNearLineSegment = (px, py, x1, y1, x2, y2, offset) => {
     return Math.hypot(px - x1, py - y1) <= offset;
   }
 
-  const t =
-    ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
+  const t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
 
   const clampedT = Math.max(0, Math.min(1, t));
 
@@ -208,7 +196,7 @@ const isPointNearRectangleBorder = (x, y, x1, y1, x2, y2, offset) => {
     isPointNearLineSegment(x, y, minX, maxY, minX, minY, offset)
   );
 };
-const isPointNearCircle = (x, y, cx, cy, px, py, offset=10) => {
+const isPointNearCircle = (x, y, cx, cy, px, py, offset = 10) => {
   // radius = distance from center to any point on circumference
   const radius = Math.hypot(px - cx, py - cy);
   // distance from center to test point

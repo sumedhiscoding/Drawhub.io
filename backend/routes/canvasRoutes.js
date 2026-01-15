@@ -107,7 +107,7 @@ router.put('/update/:id', async (req, res) => {
         const { id } = req.params;
         const { name, description, shared_with_ids, elements, background_color, background_image_url } = req.body;
         const owner_id = req.user.id;
-        console.log(name, description, shared_with_ids, elements, background_color, background_image_url);
+        
         // Build update object with only provided fields
         const updateData = {};
         if (name !== undefined) updateData.name = name;
@@ -116,7 +116,6 @@ router.put('/update/:id', async (req, res) => {
         if (elements !== undefined) updateData.elements = elements;
         if (background_color !== undefined) updateData.background_color = background_color;
         if (background_image_url !== undefined) updateData.background_image_url = background_image_url;
-        console.log(updateData);
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({ error: 'At least one field must be provided for update' });
         }

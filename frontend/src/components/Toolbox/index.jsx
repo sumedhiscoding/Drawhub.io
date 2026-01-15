@@ -1,10 +1,10 @@
-import React, { act, useContext } from "react";
-import { COLORS, FILL_STYLES, TOOLS } from "../../utils/constants";
-import toolboxContext from "../../store/board/toolbar-context";
-import { BoardContext } from "../../store/board/board-context";
+import React, { useContext } from 'react';
+import { COLORS, FILL_STYLES, TOOLS } from '../../utils/constants';
+import toolboxContext from '../../store/Context/ToolBoxContext';
+import { BoardContext } from '../../store/Context/BoardContext';
 
-import { easingOptions } from "../../utils/constants";
-import { Slider } from "@/components/ui/slider";
+import { easingOptions } from '../../utils/constants';
+import { Slider } from '@/components/ui/slider';
 import {
   Select,
   SelectContent,
@@ -13,93 +13,49 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-
-
+} from '@/components/ui/accordion';
+import useToolBoxHandler from '../../hooks/useToolBoxHandler';
 
 const Toolbox = () => {
-  const { toolBoxState, dispatchToolBoxAction } = useContext(toolboxContext);
+  const { toolBoxState } = useContext(toolboxContext);
   const { activeTool } = useContext(BoardContext);
 
   const currentToolState = toolBoxState[activeTool.name];
+  const {
+    handlePencilPropChange,
+    handleStrokeColorChange,
+    handleFillColorChange,
+    handleStrokeWidthChange,
+    handleFillStyleChange,
+  } = useToolBoxHandler();
 
-  const isPencil = activeTool?.name === "Pencil";
+  const isPencil = activeTool?.name === 'Pencil';
 
   const pencilProps = currentToolState || {};
-
-  const handlePencilPropChange = (prop, value) => {
-    dispatchToolBoxAction({
-      type: "SET_PENCIL_PROP",
-      tool: activeTool,
-      prop,
-      value,
-    });
-  };
-  const handleStrokeColorChange = (color) => {
-    dispatchToolBoxAction({
-      type: "SET_STROKE_COLOR",
-      tool: activeTool,
-      color,
-    });
-  };
-
-  const handleFillColorChange = (color) => {
-    dispatchToolBoxAction({
-      type: "SET_FILL_COLOR",
-      tool: activeTool,
-      color,
-    });
-  };
-
-  const handleStrokeWidthChange = (width) => {
-    if (activeTool.name === TOOLS.TEXT.name) {
-      dispatchToolBoxAction({
-        type: "SET_FONT_SIZE",
-        tool: activeTool,
-        fontSize: parseInt(width),
-      });
-    } else {
-      dispatchToolBoxAction({
-        type: "SET_STROKE_WIDTH",
-        tool: activeTool,
-        width: parseInt(width),
-      });
-    }
-  };
-
-  const handleFillStyleChange = (fillStyle) => {
-    dispatchToolBoxAction({
-      type: "SET_FILL_STYLE",
-      tool: activeTool,
-      fillStyle,
-    });
-  };
-
-  // ...existing code...
 
   return (
     <div className="toolbox-container">
       <div className="toolbox">
-        <Accordion type="multiple" defaultValue={["stroke-color", "stroke-width"]} className="w-full">
+        <Accordion
+          type="multiple"
+          defaultValue={['stroke-color', 'stroke-width']}
+          className="w-full"
+        >
           <AccordionItem value="stroke-color">
-            <AccordionTrigger className="toolbox-h4 py-2 w-60">
-              Stroke Color
-            </AccordionTrigger>
+            <AccordionTrigger className="toolbox-h4 py-2 w-60">Stroke Color</AccordionTrigger>
             <AccordionContent>
               <div className="toolbox-color-palette">
                 {Object.entries(COLORS).map(([name, hex]) => (
                   <button
                     key={name}
                     className={`toolbox-color-btn${
-                      currentToolState?.stroke === hex
-                        ? " toolbox-color-btn-active"
-                        : ""
+                      currentToolState?.stroke === hex ? ' toolbox-color-btn-active' : ''
                     }`}
                     style={{ backgroundColor: hex }}
                     onClick={() => handleStrokeColorChange(hex)}
@@ -112,9 +68,7 @@ const Toolbox = () => {
 
           {isPencil && (
             <AccordionItem value="pencil-settings">
-              <AccordionTrigger className="toolbox-h4 py-2">
-                Pencil Settings
-              </AccordionTrigger>
+              <AccordionTrigger className="toolbox-h4 py-2">Pencil Settings</AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-3">
                   <div className="toolbox-flex">
@@ -124,12 +78,10 @@ const Toolbox = () => {
                       max={1}
                       step={0.01}
                       value={[pencilProps.thinning ?? 0.5]}
-                      onValueChange={([val]) => handlePencilPropChange("thinning", val)}
+                      onValueChange={([val]) => handlePencilPropChange('thinning', val)}
                       className="toolbox-flex-slider"
                     />
-                    <span className="toolbox-flex-value">
-                      {pencilProps.thinning ?? 0.5}
-                    </span>
+                    <span className="toolbox-flex-value">{pencilProps.thinning ?? 0.5}</span>
                   </div>
                   <div className="toolbox-flex">
                     <span className="toolbox-flex-label">Streamline</span>
@@ -138,12 +90,10 @@ const Toolbox = () => {
                       max={1}
                       step={0.01}
                       value={[pencilProps.streamline ?? 0.5]}
-                      onValueChange={([val]) => handlePencilPropChange("streamline", val)}
+                      onValueChange={([val]) => handlePencilPropChange('streamline', val)}
                       className="toolbox-flex-slider"
                     />
-                    <span className="toolbox-flex-value">
-                      {pencilProps.streamline ?? 0.5}
-                    </span>
+                    <span className="toolbox-flex-value">{pencilProps.streamline ?? 0.5}</span>
                   </div>
                   <div className="toolbox-flex">
                     <span className="toolbox-flex-label">Smoothing</span>
@@ -152,20 +102,21 @@ const Toolbox = () => {
                       max={1}
                       step={0.01}
                       value={[pencilProps.smoothing ?? 0.5]}
-                      onValueChange={([val]) => handlePencilPropChange("smoothing", val)}
+                      onValueChange={([val]) => handlePencilPropChange('smoothing', val)}
                       className="toolbox-flex-slider"
                     />
-                    <span className="toolbox-flex-value">
-                      {pencilProps.smoothing ?? 0.5}
-                    </span>
+                    <span className="toolbox-flex-value">{pencilProps.smoothing ?? 0.5}</span>
                   </div>
                   <div className="toolbox-flex">
                     <span className="toolbox-flex-1">Easing</span>
                     <Select
-                      value={pencilProps.easing || "EaseInOutCubic"}
-                      onValueChange={(val) => handlePencilPropChange("easing", val)}
+                      value={pencilProps.easing || 'EaseInOutCubic'}
+                      onValueChange={(val) => handlePencilPropChange('easing', val)}
                     >
-                      <SelectTrigger className={`toolbox-select${pencilProps.easing ? " toolbox-select-active" : ""}`} style={{ marginTop: "4px" }}>
+                      <SelectTrigger
+                        className={`toolbox-select${pencilProps.easing ? ' toolbox-select-active' : ''}`}
+                        style={{ marginTop: '4px' }}
+                      >
                         <SelectValue placeholder="Select Easing" />
                       </SelectTrigger>
                       <SelectContent>
@@ -187,16 +138,12 @@ const Toolbox = () => {
 
           {currentToolState?.fillcolor !== undefined && (
             <AccordionItem value="fill-color">
-              <AccordionTrigger className="toolbox-h4 py-2">
-                Fill Color
-              </AccordionTrigger>
+              <AccordionTrigger className="toolbox-h4 py-2">Fill Color</AccordionTrigger>
               <AccordionContent>
                 <div className="toolbox-color-palette">
                   <button
                     className={`toolbox-none-btn${
-                      currentToolState?.fillcolor === null
-                        ? " toolbox-color-btn-active"
-                        : ""
+                      currentToolState?.fillcolor === null ? ' toolbox-color-btn-active' : ''
                     }`}
                     onClick={() => handleFillColorChange(null)}
                     title="No Fill"
@@ -207,9 +154,7 @@ const Toolbox = () => {
                     <button
                       key={name}
                       className={`toolbox-color-btn${
-                        currentToolState?.fillcolor === hex
-                          ? " toolbox-color-btn-active"
-                          : ""
+                        currentToolState?.fillcolor === hex ? ' toolbox-color-btn-active' : ''
                       }`}
                       style={{ backgroundColor: hex }}
                       onClick={() => handleFillColorChange(hex)}
@@ -223,15 +168,16 @@ const Toolbox = () => {
 
           {currentToolState?.fillStyle !== undefined && (
             <AccordionItem value="fill-style">
-              <AccordionTrigger className="toolbox-h4 py-2">
-                Fill Style
-              </AccordionTrigger>
+              <AccordionTrigger className="toolbox-h4 py-2">Fill Style</AccordionTrigger>
               <AccordionContent>
                 <Select
-                  value={currentToolState?.fillStyle ?? ""}
+                  value={currentToolState?.fillStyle ?? ''}
                   onValueChange={(val) => handleFillStyleChange(val)}
                 >
-                  <SelectTrigger className={`toolbox-select${currentToolState?.fillStyle ? " toolbox-select-active" : ""}`} style={{ marginTop: "4px" }}>
+                  <SelectTrigger
+                    className={`toolbox-select${currentToolState?.fillStyle ? ' toolbox-select-active' : ''}`}
+                    style={{ marginTop: '4px' }}
+                  >
                     <SelectValue placeholder="No Fill Style" />
                   </SelectTrigger>
                   <SelectContent>
@@ -250,9 +196,7 @@ const Toolbox = () => {
           )}
 
           <AccordionItem value="stroke-width">
-            <AccordionTrigger className="toolbox-h4 py-2">
-              Stroke Width
-            </AccordionTrigger>
+            <AccordionTrigger className="toolbox-h4 py-2">Stroke Width</AccordionTrigger>
             <AccordionContent>
               <div className="toolbox-stroke-width">
                 {activeTool.name === TOOLS.TEXT.name ? (
@@ -277,9 +221,7 @@ const Toolbox = () => {
                       onValueChange={([val]) => handleStrokeWidthChange(val)}
                       className="toolbox-flex-slider"
                     />
-                    <span className="slider-label">
-                      {currentToolState?.size || 2}px
-                    </span>
+                    <span className="slider-label">{currentToolState?.size || 2}px</span>
                   </>
                 ) : (
                   <>
@@ -291,9 +233,7 @@ const Toolbox = () => {
                       onValueChange={([val]) => handleStrokeWidthChange(val)}
                       className="toolbox-flex-slider"
                     />
-                    <span className="slider-label">
-                      {currentToolState?.size || 1}px
-                    </span>
+                    <span className="slider-label">{currentToolState?.size || 1}px</span>
                   </>
                 )}
               </div>
