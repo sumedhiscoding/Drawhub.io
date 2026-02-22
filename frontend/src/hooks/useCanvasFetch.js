@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import axios from 'axios';
 import { ALLOWED_METHODS } from '../utils/constants';
+import { createTool } from '../utils/helpers';
 /**
  * Custom hook to fetch canvas data from the API
  * Returns isInitialLoad ref and canvas data
@@ -22,11 +23,32 @@ export const useCanvasFetch = (canvasId, dispatchBoardAction, canvasDataRef) => 
 
         if (response.status === 200) {
           const canvas = response.data.canvas;
-          canvasDataRef.current = canvas;
+
+          // Hydrate elements by regenerating roughElement from stored points/coordinates
+          const hydratedElements = (canvas.elements || []).map((element) => ({
+            ...element,
+            roughElement: createTool(
+              element.type,
+              element.x1 ?? 0,
+              element.y1 ?? 0,
+              element.x2 ?? 0,
+              element.y2 ?? 0,
+              element.color,
+              element.points || [],
+              element.strokeWidth,
+              element.fill,
+              element.fillStyle,
+              element.thinning,
+              element.smoothing,
+              element.streamline,
+            ),
+          }));
+
+          canvasDataRef.current = { ...canvas, elements: hydratedElements };
 
           dispatchBoardAction({
             type: ALLOWED_METHODS.SET_ELEMENTS,
-            payload: canvas.elements,
+            payload: hydratedElements,
           });
           setTimeout(() => {
             isInitialLoad.current = false;

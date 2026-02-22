@@ -17,9 +17,9 @@ export const useCanvasUpdate = (canvasId, elements, isInitialLoad) => {
       return;
     }
 
-    const payload = {
-      elements: elements,
-    };
+    const elementsForStorage = elements.map(({ roughElement, ...rest }) => rest);
+
+    const payload = { elements: elementsForStorage };
     const token = localStorage.getItem('token');
 
     try {

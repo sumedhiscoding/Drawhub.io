@@ -17,72 +17,19 @@ const BoardReducer = (state, action) => {
 
   switch (action.type) {
     case ALLOWED_METHODS.DRAW_DOWN: {
-      const ownerId = action.payload?.ownerId || getLocalUserId();
-      const elementId = action.payload?.id || generateElementId();
-
       switch (state.activeTool) {
-        case TOOLS.PENCIL: {
-          const { points, color, strokeWidth, thinning, smoothing, streamline } = action.payload;
-          const activeToolId = activeTool?.id;
-          const newElement = {
-            id: elementId,
-            ownerId: ownerId,
-            type: activeToolId,
-            points: points,
-            color: color,
-            strokeWidth: strokeWidth,
-            roughElement: createTool(
-              activeToolId,
-              0,
-              0,
-              0,
-              0,
-              color,
-              points,
-              strokeWidth,
-              null,
-              null,
-              thinning,
-              smoothing,
-              streamline,
-            ),
-          };
-          return {
-            ...state,
-            ToolActionType: TOOL_ACTION_TYPE.DRAW,
-            elements: [...elements, newElement],
-          };
-        }
+        case TOOLS.PENCIL:
         case TOOLS.LINE:
         case TOOLS.RECTANGLE:
         case TOOLS.CIRCLE:
         case TOOLS.DIAMOND:
         case TOOLS.ARROW: {
-          const { x1, y1, color, strokeWidth, fill, fillStyle } = action.payload;
-          const activeToolId = activeTool?.id;
+          // Use the pre-built element from payload (already has roughElement)
+          // This avoids duplicate createTool calls and precision issues
           const newElement = {
-            id: elementId,
-            ownerId: ownerId,
-            type: activeToolId,
-            x1: x1,
-            y1: y1,
-            x2: x1,
-            y2: y1,
-            color: color,
-            strokeWidth: strokeWidth,
-            fill: fill,
-            fillStyle: fillStyle,
-            roughElement: createTool(
-              activeToolId,
-              x1,
-              y1,
-              x1,
-              y1,
-              color,
-              strokeWidth,
-              fill,
-              fillStyle,
-            ),
+            ...action.payload,
+            id: action.payload?.id || generateElementId(),
+            ownerId: action.payload?.ownerId || getLocalUserId(),
           };
           return {
             ...state,
@@ -192,22 +139,16 @@ const BoardReducer = (state, action) => {
     }
 
     case ALLOWED_METHODS.ADD_TEXT: {
-      const { x1, y1, text, fontSize, color, id: elemId, ownerId: elemOwnerId } = action.payload;
-      const updatedElement = {
-        id: elemId || generateElementId(),
-        ownerId: elemOwnerId || getLocalUserId(),
-        type: activeTool.id,
-        left: x1,
-        top: y1,
-        text: text,
-        fontSize: fontSize,
-        color: color,
+      // Use the pre-built element from payload (from createTextElement)
+      const newElement = {
+        ...action.payload,
+        id: action.payload?.id || generateElementId(),
+        ownerId: action.payload?.ownerId || getLocalUserId(),
       };
-      const updatedElements = [...elements, updatedElement];
       return {
         ...state,
         ToolActionType: TOOL_ACTION_TYPE.WRITE,
-        elements: updatedElements,
+        elements: [...elements, newElement],
       };
     }
 
