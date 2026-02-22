@@ -1,5 +1,5 @@
 import React from 'react';
-import { Radio, Circle } from 'lucide-react';
+import { Radio, Video } from 'lucide-react';
 import { useLiveSession } from '../../hooks/useLiveSession';
 
 /**
@@ -36,7 +36,7 @@ const GoLiveButton = () => {
           />
         </>
       ) : (
-        <Circle size={19} />
+        <Video size={19} />
       )}
     </button>
   );

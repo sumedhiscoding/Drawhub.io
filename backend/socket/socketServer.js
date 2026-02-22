@@ -206,6 +206,45 @@ export const initializeSocketServer = (httpServer) => {
       }
     });
 
+    // Handle clear board (broadcast to live session participants)
+    socket.on('clear-board', (data) => {
+      try {
+        // Get canvasId from socket data
+        const canvasId = socket.currentCanvasId;
+        
+        if (!canvasId) {
+          logger.warn('Clear board received but no canvas room joined');
+          return;
+        }
+
+        // Verify canvas has active live session
+        if (!liveSessionService.isLive(canvasId)) {
+          logger.warn(`Clear board received but canvas ${canvasId} is not live`);
+          return;
+        }
+
+        // Get the room to check how many clients are in it
+        const room = socket.nsp.adapter.rooms.get(`live:${canvasId}`);
+        const roomSize = room ? room.size : 0;
+        
+        logger.info(`📡 Broadcasting clear-board for canvas:${canvasId}`, {
+          userId: socket.userId,
+          roomSize: roomSize,
+        });
+
+        // Broadcast to live session room (excluding sender)
+        socket.to(`live:${canvasId}`).emit('clear-board', {
+          userId: socket.userId,
+          timestamp: data.timestamp || Date.now(),
+        });
+        
+        logger.debug(`✅ Clear board broadcasted to ${roomSize - 1} participants (excluding sender)`);
+      } catch (error) {
+        logger.error(error, 'Error handling clear-board');
+        socket.emit('error', { message: 'Failed to process clear board' });
+      }
+    });
+
     // Handle disconnection
     socket.on('disconnect', (reason) => {
       const canvasId = socket.currentCanvasId;

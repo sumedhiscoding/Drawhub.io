@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useContext } from 'react';
 import { BoardContext } from '../store/Context/BoardContext';
-import { REALTIME_CHANGE_TYPES, CHANGE_SOURCES } from '../utils/constants';
+import { REALTIME_CHANGE_TYPES, CHANGE_SOURCES, ALLOWED_METHODS } from '../utils/constants';
 import { getLocalUserId } from '../utils/helpers';
 import { useThrottledSync } from './useThrottledSync';
 
@@ -128,14 +128,24 @@ export const useBoardSync = ({ socket }) => {
       }
     };
 
-    console.log('useBoardSync: Setting up element-update listener');
+    const handleClearBoard = () => {
+      console.log('📥 useBoardSync: Received clear-board event');
+      // Clear board immediately
+      dispatchBoardAction({
+        type: ALLOWED_METHODS.CLEAR_BOARD,
+      });
+    };
+
+    console.log('useBoardSync: Setting up element-update and clear-board listeners');
     socket.on('element-update', handleRemoteChange);
+    socket.on('clear-board', handleClearBoard);
 
     return () => {
-      console.log('useBoardSync: Cleaning up element-update listener');
+      console.log('useBoardSync: Cleaning up listeners');
       socket.off('element-update', handleRemoteChange);
+      socket.off('clear-board', handleClearBoard);
     };
-  }, [socket, applyChange]);
+  }, [socket, applyChange, dispatchBoardAction]);
 
   return { applyChange, flushPendingSync };
 };
