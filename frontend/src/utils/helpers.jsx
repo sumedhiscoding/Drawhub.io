@@ -1,6 +1,7 @@
 import { TOOLS } from './constants';
 import { getStroke } from 'perfect-freehand';
 import rough from 'roughjs';
+import { CHANGE_SOURCES, REALTIME_CHANGE_TYPES } from './constants';
 export const createTool = (
   id,
   x1,
@@ -235,3 +236,23 @@ export const getLocalUserId = () => {
     return 'anonymous';
   }
 };
+
+
+export function createChange({
+  elementId,
+  type = REALTIME_CHANGE_TYPES.ADD,
+  element,      // Change from 'payload' to 'element'
+  updates,       // Add 'updates' parameter
+  userId = getLocalUserId(),
+  source = CHANGE_SOURCES.LOCAL,
+}) {
+  return {
+    elementId,
+    type,
+    element,     // Change from 'payload' to 'element'
+    updates,     // Add 'updates'
+    userId,
+    source,
+    timestamp: Date.now(),
+  };
+}

@@ -132,3 +132,14 @@ export const TOOL_BOX_ACTIONS = {
   SET_FILL_STYLE: 'SET_FILL_STYLE',
   SET_FONT_SIZE: 'SET_FONT_SIZE',
 };
+
+export const REALTIME_CHANGE_TYPES = {
+  ADD: 'ADD',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+};
+
+export const CHANGE_SOURCES = {
+  LOCAL: 'LOCAL',
+  REMOTE: 'REMOTE',
+};

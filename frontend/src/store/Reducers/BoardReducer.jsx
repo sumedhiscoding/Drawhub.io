@@ -1,10 +1,28 @@
-import { ALLOWED_METHODS, TOOLS, TOOL_ACTION_TYPE } from '../../utils/constants';
+import { ALLOWED_METHODS, TOOLS, TOOL_ACTION_TYPE, REALTIME_CHANGE_TYPES } from '../../utils/constants';
 import {
   createTool,
   isPointNearElement,
   generateElementId,
   getLocalUserId,
 } from '../../utils/helpers';
+
+export const getToolParams = (element) => {
+  return [
+    element.type,
+    element.x1 ?? 0,
+    element.y1 ?? 0,
+    element.x2 ?? 0,
+    element.y2 ?? 0,
+    element.color,
+    element.points || [],
+    element.strokeWidth,
+    element.fill,
+    element.fillStyle,
+    element.thinning ?? 0.5,
+    element.smoothing ?? 0.5,
+    element.streamline ?? 0.5,
+  ];
+};
 
 /**
  * Board Reducer - SINGLE SOURCE OF TRUTH for elements
@@ -242,6 +260,36 @@ const BoardReducer = (state, action) => {
       return state;
     }
 
+    case REALTIME_CHANGE_TYPES.ADD: {
+      const newElement = {
+        ...action.payload.element,
+        id: action.payload.elementId || generateElementId(),
+        ownerId: action.payload.element?.ownerId || getLocalUserId(),
+        roughElement: createTool(...getToolParams(action.payload.element)),
+      };
+      return { ...state, elements: [...elements, newElement] };
+    }
+    case REALTIME_CHANGE_TYPES.UPDATE: {
+      const existingElement = elements.find((e) => e.id === action.payload.elementId);
+      
+      // Add safety check
+      if (!existingElement) {
+        console.warn(`Element ${action.payload.elementId} not found for UPDATE`);
+        return state;
+      }
+      
+      const updatedElement = {
+        ...existingElement,
+        ...action.payload.updates,
+        roughElement: createTool(...getToolParams({ ...existingElement, ...action.payload.updates })),
+      };
+      const updatedElements = [...elements.filter((e) => e.id !== action.payload.elementId), updatedElement];
+      return { ...state, elements: updatedElements };
+    }
+    case REALTIME_CHANGE_TYPES.DELETE: {
+      const updatedElements = [...elements.filter((e) => e.id !== action.payload.elementId)];
+      return { ...state, elements: updatedElements };
+    }
     default:
       return state;
   }

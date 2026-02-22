@@ -5,6 +5,7 @@ import CanvasActionsProvider from '../../store/Providers/CanvasActionProvider';
 import { HistoryProvider } from '../../store/History';
 import Toolbar from '../../components/Toolbar';
 import Board from '../../components/Board';
+import SocketProvider from '../../store/Providers/SocketProvider'; // Add this
 
 export default function Canvas() {
   return (
@@ -12,8 +13,10 @@ export default function Canvas() {
       <BoardProvider>
         <ToolBoxProvider>
           <CanvasActionsProvider>
-            <Toolbar />
-            <Board />
+            <SocketProvider>
+              <Toolbar />
+              <Board />
+            </SocketProvider>
           </CanvasActionsProvider>
         </ToolBoxProvider>
       </BoardProvider>
