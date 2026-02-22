@@ -21,7 +21,7 @@ import {
   createShapeMovePayload,
 } from './elementFactories';
 
-import { createChange } from '../utils/helpers';
+import { createChange, getLocalUserId } from '../utils/helpers';
 import { REALTIME_CHANGE_TYPES, CHANGE_SOURCES } from '../utils/constants';
 import { useBoardSync } from './useBoardSync';
 import { useThrottledSync } from './useThrottledSync';
@@ -64,20 +64,50 @@ export const useBoardHandlers = () => {
     lastProcessedPatchRef,
   );
 
-  // Throttled sync function for pencil - syncs directly to socket without dispatching
-  // This prevents double-dispatching (DRAW_MOVE already updated state)
-  const throttledPencilSync = useThrottledSync(
+  // Shared sync function that emits to socket - use useCallback to stabilize reference
+  const emitSync = useCallback(
     (change) => {
       if (socket?.connected) {
         try {
-          socket.emit('element-update', change);
+          // Ensure change has all required fields before emitting
+          const changeToEmit = {
+            ...change,
+            userId: change.userId || getLocalUserId(),
+            timestamp: change.timestamp || Date.now(),
+          };
+          // Reduced logging for performance - only log occasionally
+          const label = change._label || 'element';
+          if (Math.random() < 0.1) { // Log 10% of the time
+            console.log(`📤 Emitting element-update (${label}):`, {
+              elementId: changeToEmit.elementId,
+              type: changeToEmit.type,
+            });
+          }
+          socket.emit('element-update', changeToEmit);
         } catch (error) {
-          console.warn('Pencil sync failed (non-blocking):', error);
+          console.warn('Sync failed (non-blocking):', error);
         }
       }
     },
-    150, // Throttle to 150ms - balances real-time feel with network efficiency
+    [socket],
   );
+
+  // Wrapper for shape sync to add label
+  const emitShapeSync = useCallback(
+    (change) => {
+      emitSync({ ...change, _label: 'shape' });
+    },
+    [emitSync],
+  );
+
+  // Throttled sync function for pencil - syncs directly to socket without dispatching
+  // This prevents double-dispatching (DRAW_MOVE already updated state)
+  // Reduced to 50ms for smoother real-time feel (20 updates/second)
+  const throttledPencilSync = useThrottledSync(emitSync, 50);
+
+  // Throttled sync for shapes (same function, different throttle interval)
+  // Reduced to 50ms for smoother real-time feel
+  const throttledSync = useThrottledSync(emitShapeSync, 50);
 
   // Callback to sync pencil after each RAF batch completes
   // This enables real-time sync during drawing
@@ -92,6 +122,7 @@ export const useBoardHandlers = () => {
         const currentElement = getCurrentElement();
         if (currentElement && currentElement.points) {
           // Sync the updated points - this is what makes real-time collaboration work
+          // Include all properties needed to create the element if it doesn't exist yet
           const change = createChange({
             elementId: currentElement.id,
             type: REALTIME_CHANGE_TYPES.UPDATE,
@@ -100,13 +131,22 @@ export const useBoardHandlers = () => {
               // Include x2, y2 if they exist (for bounding box)
               ...(currentElement.x2 !== undefined && { x2: currentElement.x2 }),
               ...(currentElement.y2 !== undefined && { y2: currentElement.y2 }),
+              // Include x1, y1 (first point coordinates)
+              ...(currentElement.x1 !== undefined && { x1: currentElement.x1 }),
+              ...(currentElement.y1 !== undefined && { y1: currentElement.y1 }),
+              // Include all style properties needed to create the element
+              color: currentElement.color,
+              strokeWidth: currentElement.strokeWidth,
+              thinning: currentElement.thinning,
+              smoothing: currentElement.smoothing,
+              streamline: currentElement.streamline,
             },
             source: CHANGE_SOURCES.LOCAL,
           });
 
           // Use throttled sync to avoid too many network calls
           // This syncs directly to socket (don't dispatch UPDATE - DRAW_MOVE already did that)
-          throttledPencilSync(change);
+          throttledPencilSync({ ...change, _label: 'pencil' });
         }
       } catch (error) {
         console.warn('Pencil sync after batch failed (non-blocking):', error);
@@ -169,6 +209,15 @@ export const useBoardHandlers = () => {
           type: ALLOWED_METHODS.ADD_TEXT,
           payload: newElement,
         });
+        
+        // Sync text element creation immediately so remote users see it
+        const change = createChange({
+          elementId: newElement.id,
+          type: REALTIME_CHANGE_TYPES.ADD,
+          element: stripForHistory(newElement),
+          source: CHANGE_SOURCES.LOCAL,
+        });
+        applyChange(change, false, false);
       }
     },
     [
@@ -178,6 +227,7 @@ export const useBoardHandlers = () => {
       dispatchBoardAction,
       currentElementIdRef,
       drawStartElementRef,
+      applyChange,
     ],
   );
 
@@ -231,14 +281,14 @@ export const useBoardHandlers = () => {
             source: CHANGE_SOURCES.LOCAL,
           });
           
-          // Sync only - don't call applyChange which would dispatch UPDATE to reducer
-          // DRAW_MOVE already updated the reducer, so we only need to sync to socket
-          // This prevents double-dispatch and stale data issues
+          // Use throttled sync to avoid too many network calls during drawing
+          // This syncs directly to socket (don't dispatch UPDATE - DRAW_MOVE already did that)
           if (socket?.connected) {
             setTimeout(() => {
               try {
                 if (socket?.connected) {
-                  socket.emit('element-update', change);
+                  // Use throttled sync for shapes too (like pencil)
+                  throttledSync(change);
                 }
               } catch (error) {
                 console.warn('Shape sync failed (non-blocking):', error);
@@ -364,10 +414,19 @@ export const useBoardHandlers = () => {
             elementId: finalElement.id,
           });
 
+          // Include all text properties in the update so remote can create element if needed
           const change = createChange({
             elementId: finalElement.id,
             type: REALTIME_CHANGE_TYPES.UPDATE,
-            updates: { text: textValue },
+            updates: {
+              text: textValue,
+              left: finalElement.left,
+              top: finalElement.top,
+              x1: finalElement.x1,
+              y1: finalElement.y1,
+              fontSize: finalElement.fontSize,
+              color: finalElement.color,
+            },
             source: CHANGE_SOURCES.LOCAL,
           });
           applyChange(change, false, false);

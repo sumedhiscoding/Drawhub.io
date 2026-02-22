@@ -261,28 +261,164 @@ const BoardReducer = (state, action) => {
     }
 
     case REALTIME_CHANGE_TYPES.ADD: {
+      // Check if element already exists (might have been created from UPDATE)
+      const existingElement = elements.find((e) => e.id === action.payload.elementId);
+      
+      if (existingElement) {
+        // Element already exists (created from UPDATE), merge with ADD data
+        // ADD has the complete element, so use it but preserve any updates that might have arrived
+        console.log('⚠️ ADD received for existing element, merging...', {
+          elementId: action.payload.elementId,
+        });
+        
+        const mergedElement = {
+          ...action.payload.element,
+          id: action.payload.elementId,
+          ownerId: action.payload.element?.ownerId || existingElement.ownerId,
+          // Preserve points from existing if they're more recent (longer array)
+          points: existingElement.points?.length > (action.payload.element?.points?.length || 0) 
+            ? existingElement.points 
+            : (action.payload.element?.points || existingElement.points),
+          roughElement: createTool(...getToolParams({
+            ...action.payload.element,
+            // Use existing points if they're more complete
+            points: existingElement.points?.length > (action.payload.element?.points?.length || 0) 
+              ? existingElement.points 
+              : (action.payload.element?.points || []),
+          })),
+        };
+        
+        const updatedElements = [...elements.filter((e) => e.id !== action.payload.elementId), mergedElement];
+        return { ...state, elements: updatedElements };
+      }
+      
+      // Element doesn't exist, create it
       const newElement = {
         ...action.payload.element,
         id: action.payload.elementId || generateElementId(),
         ownerId: action.payload.element?.ownerId || getLocalUserId(),
         roughElement: createTool(...getToolParams(action.payload.element)),
       };
+      
+      console.log('✅ Reducer: Adding new element', {
+        elementId: newElement.id,
+        type: newElement.type,
+      });
+      
       return { ...state, elements: [...elements, newElement] };
     }
     case REALTIME_CHANGE_TYPES.UPDATE: {
       const existingElement = elements.find((e) => e.id === action.payload.elementId);
+      const updates = action.payload.updates || {};
       
-      // Add safety check
+      // If element doesn't exist, create it from the updates (handles UPDATE arriving before ADD)
       if (!existingElement) {
-        console.warn(`Element ${action.payload.elementId} not found for UPDATE`);
-        return state;
+        console.log('⚠️ Element not found for UPDATE, creating from updates', {
+          elementId: action.payload.elementId,
+          hasPoints: !!updates.points,
+          hasX2Y2: !!(updates.x2 !== undefined && updates.y2 !== undefined),
+        });
+
+        // Determine element type from updates
+        // If updates has points, it's a pencil element
+        if (updates.points && Array.isArray(updates.points) && updates.points.length > 0) {
+          // It's a pencil - create element from updates
+          // Derive x1, y1 from first point if not provided
+          const firstPoint = updates.points[0];
+          const x1 = updates.x1 !== undefined ? updates.x1 : (Array.isArray(firstPoint) ? firstPoint[0] : 0);
+          const y1 = updates.y1 !== undefined ? updates.y1 : (Array.isArray(firstPoint) ? firstPoint[1] : 0);
+          
+          const newElement = {
+            id: action.payload.elementId,
+            ownerId: getLocalUserId(), // Will be overridden by actual owner when ADD arrives
+            type: TOOLS.PENCIL.id,
+            points: updates.points,
+            strokeWidth: updates.strokeWidth || 2,
+            color: updates.color || '#000',
+            thinning: updates.thinning ?? 0.5,
+            smoothing: updates.smoothing ?? 0.5,
+            streamline: updates.streamline ?? 0.5,
+            x1: x1,
+            y1: y1,
+            x2: updates.x2 !== undefined ? updates.x2 : x1,
+            y2: updates.y2 !== undefined ? updates.y2 : y1,
+            roughElement: createTool(
+              TOOLS.PENCIL.id,
+              x1,
+              y1,
+              updates.x2 !== undefined ? updates.x2 : x1,
+              updates.y2 !== undefined ? updates.y2 : y1,
+              updates.color || '#000',
+              updates.points,
+              updates.strokeWidth || 2,
+              null,
+              null,
+              updates.thinning ?? 0.5,
+              updates.smoothing ?? 0.5,
+              updates.streamline ?? 0.5,
+            ),
+          };
+          
+          // Element created successfully - no need to log every time
+          
+          return { ...state, elements: [...elements, newElement] };
+        } else if (updates.text !== undefined) {
+          // It's a text element - create from updates
+          // Text updates should include position and style info
+          const newElement = {
+            id: action.payload.elementId,
+            ownerId: getLocalUserId(), // Will be overridden by actual owner when ADD arrives
+            type: TOOLS.TEXT.id,
+            text: updates.text || '',
+            left: updates.left || 0,
+            top: updates.top || 0,
+            x1: updates.x1 || updates.left || 0,
+            y1: updates.y1 || updates.top || 0,
+            fontSize: updates.fontSize || 16,
+            color: updates.color || '#000',
+          };
+          
+          return { ...state, elements: [...elements, newElement] };
+        } else if (updates.x2 !== undefined && updates.y2 !== undefined) {
+          // It's likely a shape, but we don't have enough info to create it properly
+          // Just log and skip - wait for ADD
+          console.warn('⚠️ UPDATE for shape element received before ADD - cannot create without type. Waiting for ADD...', {
+            elementId: action.payload.elementId,
+          });
+          return state;
+        } else {
+          // Unknown type, skip
+          console.warn('⚠️ UPDATE received but cannot determine element type from updates', {
+            elementId: action.payload.elementId,
+            updates: Object.keys(updates),
+          });
+          return state;
+        }
       }
       
+      // Element exists - apply updates
+      // Merge updates - for pencil, points should be replaced (not appended) when coming from remote
       const updatedElement = {
         ...existingElement,
-        ...action.payload.updates,
-        roughElement: createTool(...getToolParams({ ...existingElement, ...action.payload.updates })),
+        // For pencil points from remote, replace the entire points array
+        // (remote already has the complete updated points array)
+        ...(updates.points ? { points: updates.points } : {}),
+        // Merge other updates
+        ...Object.fromEntries(
+          Object.entries(updates).filter(([key]) => key !== 'points')
+        ),
+        // Rebuild roughElement with updated data
+        roughElement: createTool(...getToolParams({ 
+          ...existingElement, 
+          ...updates,
+          // Ensure points are used from updates if provided
+          points: updates.points || existingElement.points,
+        })),
       };
+      
+      // Reduced logging for performance
+      // Only log occasionally to avoid console spam
+      
       const updatedElements = [...elements.filter((e) => e.id !== action.payload.elementId), updatedElement];
       return { ...state, elements: updatedElements };
     }

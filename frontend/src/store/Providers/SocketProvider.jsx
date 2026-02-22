@@ -34,6 +34,8 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     // Initialize socket connection with non-blocking configuration
     const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem('token');
+    
     const socket = io(socketUrl, {
       transports: ['websocket', 'polling'], // Add polling as fallback
       autoConnect: true,
@@ -44,6 +46,8 @@ export const SocketProvider = ({ children }) => {
       timeout: 5000, // Connection timeout - don't wait forever
       // Don't block on connection - allow app to work without socket
       forceNew: false,
+      // Add auth token for authentication
+      auth: token ? { token } : {},
     });
 
     // Set socket immediately (don't wait for connection)

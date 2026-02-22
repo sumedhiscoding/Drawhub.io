@@ -11,6 +11,7 @@ import { useCanvasUpdate } from '../../hooks/useCanvasUpdate';
 import { useCanvasDraw } from '../../hooks/useCanvasDraw';
 import { useTextAreaFocus } from '../../hooks/useTextAreaFocus';
 import { useBoardHandlers } from '../../hooks/useBoardHandlers';
+import { useCanvasRoom } from '../../hooks/useCanvasRoom';
 
 const Board = () => {
   const canvasRef = useRef(null);
@@ -40,6 +41,9 @@ const Board = () => {
 
   // Focus textarea when in WRITE mode
   useTextAreaFocus(textAreaRef, ToolActionType);
+
+  // Join canvas room for live sessions (if active)
+  useCanvasRoom();
 
   // Board event handlers with XState history integration
   const {

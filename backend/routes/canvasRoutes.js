@@ -11,6 +11,7 @@ import { deleteCanvas } from '../controllers/CanvasControllers/deleteCanvas.js';
 import { shareCanvas } from '../controllers/CanvasControllers/shareCanvas.js';
 import { getSharedUsers } from '../controllers/CanvasControllers/getSharedUsers.js';
 import { removeAccess } from '../controllers/CanvasControllers/removeAccess.js';
+import { startLiveSession, stopLiveSession, getLiveSessionStatus } from '../controllers/CanvasControllers/liveSessionController.js';
 
 const router = Router();
 
@@ -223,6 +224,64 @@ router.delete('/remove-access/:id', async (req, res) => {
     } catch (error) {
         logger.error(error, "Error removing access");
         if (error.message.includes('not found') || error.message.includes('permission') || error.message.includes('does not have access')) {
+            return res.status(400).json({ error: error.message });
+        }
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+// Live session routes
+router.post('/live/start/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        
+        const result = await startLiveSession(id, userId);
+        return res.status(200).json({ 
+            message: 'Live session started successfully', 
+            ...result 
+        });
+    } catch (error) {
+        logger.error(error, "Error starting live session");
+        if (error.message.includes('not found') || error.message.includes('owner')) {
+            return res.status(400).json({ error: error.message });
+        }
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/live/stop/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        
+        const result = await stopLiveSession(id, userId);
+        return res.status(200).json({ 
+            message: 'Live session stopped successfully', 
+            ...result 
+        });
+    } catch (error) {
+        logger.error(error, "Error stopping live session");
+        if (error.message.includes('not found') || error.message.includes('owner') || error.message.includes('No active')) {
+            return res.status(400).json({ error: error.message });
+        }
+        return res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/live/status/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        
+        const result = await getLiveSessionStatus(id, userId);
+        return res.status(200).json({ 
+            message: 'Live session status fetched successfully', 
+            ...result 
+        });
+    } catch (error) {
+        logger.error(error, "Error getting live session status");
+        if (error.message.includes('not found') || error.message.includes('access')) {
             return res.status(400).json({ error: error.message });
         }
         return res.status(500).json({ error: error.message });

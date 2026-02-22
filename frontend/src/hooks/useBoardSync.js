@@ -17,12 +17,30 @@ export const useBoardSync = ({ socket }) => {
       // Quick check - don't block if socket not ready
       if (socket?.connected) {
         try {
+          // Ensure change has all required fields
+          const changeToEmit = {
+            ...change,
+            userId: change.userId || getLocalUserId(),
+            timestamp: change.timestamp || Date.now(),
+          };
+          // Reduced logging for performance
+          if (Math.random() < 0.2) { // Log 20% of the time
+            console.log('📤 Immediate sync emitting element-update:', {
+              elementId: changeToEmit.elementId,
+              type: changeToEmit.type,
+            });
+          }
           // Fire and forget - never block
-          socket.emit('element-update', change);
+          socket.emit('element-update', changeToEmit);
         } catch (error) {
           // Silently fail - don't block drawing
           console.warn('Socket emit failed (non-blocking):', error);
         }
+      } else {
+        console.warn('⚠️ Socket not connected, cannot sync:', {
+          elementId: change.elementId,
+          type: change.type,
+        });
       }
     },
     [socket],
@@ -34,6 +52,7 @@ export const useBoardSync = ({ socket }) => {
     (change, isRemote = false, throttle = false) => {
       // CRITICAL: Dispatch to reducer FIRST - this is what makes drawing work
       // This must never wait for socket operations
+      // For remote changes, dispatch immediately and synchronously
       dispatchBoardAction({
         type: change.type,
         payload: {
@@ -87,18 +106,33 @@ export const useBoardSync = ({ socket }) => {
 
   // Listen for remote changes
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.warn('useBoardSync: No socket available');
+      return;
+    }
 
     const handleRemoteChange = (change) => {
+      // Reduced logging for performance - only log occasionally
+      if (Math.random() < 0.1) {
+        console.log('📥 useBoardSync: Received element-update', {
+          elementId: change.elementId,
+          type: change.type,
+        });
+      }
+      
       // Only apply if it's not from us (if server doesn't exclude sender)
       if (change.userId !== getLocalUserId()) {
+        // Apply immediately - don't batch or delay
+        // This is critical for smooth real-time updates
         applyChange(change, true);
       }
     };
 
+    console.log('useBoardSync: Setting up element-update listener');
     socket.on('element-update', handleRemoteChange);
 
     return () => {
+      console.log('useBoardSync: Cleaning up element-update listener');
       socket.off('element-update', handleRemoteChange);
     };
   }, [socket, applyChange]);

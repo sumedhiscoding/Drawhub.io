@@ -24,16 +24,21 @@ const BoardProvider = ({ children }) => {
       },
     });
 
-  const boardContextValue = {
-    color: BoardState.color,
-    elements: BoardState.elements,
-    activeTool: BoardState.activeTool,
-    strokeWidth: BoardState.strokeWidth,
-    ToolActionType: BoardState.ToolActionType,
-    setActiveTool,
-    dispatchBoardAction,
-    ALLOWED_METHODS,
-  };
+  // Create context value - ensure new object reference on every state change
+  // This is important for React to detect changes and trigger re-renders
+  const boardContextValue = React.useMemo(
+    () => ({
+      color: BoardState.color,
+      elements: BoardState.elements,
+      activeTool: BoardState.activeTool,
+      strokeWidth: BoardState.strokeWidth,
+      ToolActionType: BoardState.ToolActionType,
+      setActiveTool,
+      dispatchBoardAction,
+      ALLOWED_METHODS,
+    }),
+    [BoardState, setActiveTool, dispatchBoardAction],
+  );
 
   return <BoardContext.Provider value={boardContextValue}>{children}</BoardContext.Provider>;
 };
