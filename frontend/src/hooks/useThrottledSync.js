@@ -1,12 +1,23 @@
 // hooks/useThrottledSync.js
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 /**
  * Creates a throttled function that only executes once per interval
+ * Completely non-blocking - never affects drawing performance
  */
 export const useThrottledSync = (syncFn, interval = 100) => {
   const lastSyncRef = useRef(0);
   const timeoutRef = useRef(null);
+
+  // Cleanup on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const throttledSync = useCallback(
     (change) => {
@@ -19,15 +30,24 @@ export const useThrottledSync = (syncFn, interval = 100) => {
         timeoutRef.current = null;
       }
 
-      // If enough time has passed, sync immediately
+      // If enough time has passed, sync immediately (but still async)
       if (timeSinceLastSync >= interval) {
         lastSyncRef.current = now;
-        syncFn(change);
+        // Wrap in try-catch to ensure it never throws
+        try {
+          syncFn(change);
+        } catch (error) {
+          console.warn('Throttled sync failed (non-blocking):', error);
+        }
       } else {
         // Otherwise, schedule sync for later
         timeoutRef.current = setTimeout(() => {
           lastSyncRef.current = Date.now();
-          syncFn(change);
+          try {
+            syncFn(change);
+          } catch (error) {
+            console.warn('Scheduled sync failed (non-blocking):', error);
+          }
           timeoutRef.current = null;
         }, interval - timeSinceLastSync);
       }

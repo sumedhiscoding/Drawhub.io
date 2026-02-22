@@ -7,9 +7,10 @@ import { TOOLS, ALLOWED_METHODS } from '../utils/constants';
  * 
  * @param {Object} refs - Drawing refs from useDrawingRefs
  * @param {Function} dispatchBoardAction - Board action dispatcher
+ * @param {Function} onBatchComplete - Optional callback after each RAF batch completes
  * @returns {Object} Pencil move and flush handlers
  */
-export const usePencilThrottle = (refs, dispatchBoardAction) => {
+export const usePencilThrottle = (refs, dispatchBoardAction, onBatchComplete) => {
   const { rafIdRef, pendingPointsRef, lastMoveDataRef } = refs;
 
   // Create pencil move payload (reusable)
@@ -44,13 +45,22 @@ export const usePencilThrottle = (refs, dispatchBoardAction) => {
 
         if (pointsToAdd.length === 0 || !moveData) return;
 
+        // Dispatch DRAW_MOVE - this updates the state
         dispatchBoardAction({
           type: ALLOWED_METHODS.DRAW_MOVE,
           payload: createPencilPayload(pointsToAdd, moveData),
         });
+
+        // Call callback after state update (for real-time sync)
+        // Use setTimeout to ensure state has updated
+        if (onBatchComplete) {
+          setTimeout(() => {
+            onBatchComplete(pointsToAdd.length);
+          }, 0);
+        }
       });
     }
-  }, [pendingPointsRef, lastMoveDataRef, rafIdRef, dispatchBoardAction, createPencilPayload]);
+  }, [pendingPointsRef, lastMoveDataRef, rafIdRef, dispatchBoardAction, createPencilPayload, onBatchComplete]);
 
   // Flush any pending points (call on mouse up)
   const flushPendingPoints = useCallback(() => {
@@ -71,9 +81,16 @@ export const usePencilThrottle = (refs, dispatchBoardAction) => {
           type: ALLOWED_METHODS.DRAW_MOVE,
           payload: createPencilPayload(pointsToAdd, moveData),
         });
+
+        // Call callback after flush (for final sync)
+        if (onBatchComplete) {
+          setTimeout(() => {
+            onBatchComplete(pointsToAdd.length);
+          }, 0);
+        }
       }
     }
-  }, [rafIdRef, pendingPointsRef, lastMoveDataRef, dispatchBoardAction, createPencilPayload]);
+  }, [rafIdRef, pendingPointsRef, lastMoveDataRef, dispatchBoardAction, createPencilPayload, onBatchComplete]);
 
   return {
     handlePencilMove,

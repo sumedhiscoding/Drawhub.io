@@ -24,6 +24,7 @@ import {
 import { createChange } from '../utils/helpers';
 import { REALTIME_CHANGE_TYPES, CHANGE_SOURCES } from '../utils/constants';
 import { useBoardSync } from './useBoardSync';
+import { useThrottledSync } from './useThrottledSync';
 
 /**
  * Custom hook to handle board mouse events, text area blur, and undo/redo
@@ -63,8 +64,62 @@ export const useBoardHandlers = () => {
     lastProcessedPatchRef,
   );
 
-  // Pencil throttling
-  const { handlePencilMove, flushPendingPoints } = usePencilThrottle(refs, dispatchBoardAction);
+  // Throttled sync function for pencil - syncs directly to socket without dispatching
+  // This prevents double-dispatching (DRAW_MOVE already updated state)
+  const throttledPencilSync = useThrottledSync(
+    (change) => {
+      if (socket?.connected) {
+        try {
+          socket.emit('element-update', change);
+        } catch (error) {
+          console.warn('Pencil sync failed (non-blocking):', error);
+        }
+      }
+    },
+    150, // Throttle to 150ms - balances real-time feel with network efficiency
+  );
+
+  // Callback to sync pencil after each RAF batch completes
+  // This enables real-time sync during drawing
+  const syncPencilAfterBatch = useCallback(() => {
+    // Only sync if we have a current element and socket is connected
+    if (!currentElementIdRef.current || !socket?.connected) return;
+
+    // Get the updated element after RAF has executed
+    // Use setTimeout to ensure state has updated
+    setTimeout(() => {
+      try {
+        const currentElement = getCurrentElement();
+        if (currentElement && currentElement.points) {
+          // Sync the updated points - this is what makes real-time collaboration work
+          const change = createChange({
+            elementId: currentElement.id,
+            type: REALTIME_CHANGE_TYPES.UPDATE,
+            updates: {
+              points: currentElement.points,
+              // Include x2, y2 if they exist (for bounding box)
+              ...(currentElement.x2 !== undefined && { x2: currentElement.x2 }),
+              ...(currentElement.y2 !== undefined && { y2: currentElement.y2 }),
+            },
+            source: CHANGE_SOURCES.LOCAL,
+          });
+
+          // Use throttled sync to avoid too many network calls
+          // This syncs directly to socket (don't dispatch UPDATE - DRAW_MOVE already did that)
+          throttledPencilSync(change);
+        }
+      } catch (error) {
+        console.warn('Pencil sync after batch failed (non-blocking):', error);
+      }
+    }, 0);
+  }, [socket, currentElementIdRef, getCurrentElement, throttledPencilSync]);
+
+  // Pencil throttling with real-time sync callback
+  const { handlePencilMove, flushPendingPoints } = usePencilThrottle(
+    refs,
+    dispatchBoardAction,
+    syncPencilAfterBatch, // Pass callback for real-time sync
+  );
 
   // Mouse down handler
   const handleMouseDown = useCallback(
@@ -140,45 +195,55 @@ export const useBoardHandlers = () => {
       const { clientX, clientY } = event;
 
       if (activeTool === TOOLS.PENCIL) {
+        // CRITICAL: handlePencilMove uses RAF to batch points and dispatch DRAW_MOVE
+        // This is async, so we can't sync immediately - would use stale data
+        // Pencil drawing is smooth because RAF batches updates efficiently
         handlePencilMove(event, styles);
-        if (currentElementIdRef.current) {
-          const currentElement = getCurrentElement();
-          if (currentElement) {
-            const change = createChange({
-              elementId: currentElement.id,
-              type: REALTIME_CHANGE_TYPES.UPDATE,
-              updates: {
-                points: currentElement.points,
-                x2: currentElement.x2,
-                y2: currentElement.y2,
-              },
-              source: CHANGE_SOURCES.LOCAL,
-            });
-            applyChange(change, false, true); // true = throttle
-          }
-        }
+        
+        // Don't sync during drawing - DRAW_MOVE already handles state updates
+        // Sync will happen on mouse up via flushPendingSync and final applyChange
+        // This prevents:
+        // 1. Stale data issues (getCurrentElement before RAF executes)
+        // 2. Double-dispatching (DRAW_MOVE + UPDATE conflict)
+        // 3. Performance issues (too many sync operations)
         return;
       }
 
       if (isShapeTool(activeTool)) {
+        // CRITICAL: Dispatch DRAW_MOVE first - this makes the shape appear/expand
+        // This is synchronous and immediate - shapes will draw smoothly
         dispatchBoardAction({
           type: ALLOWED_METHODS.DRAW_MOVE,
           payload: createShapeMovePayload(activeTool, clientX, clientY, styles),
         });
 
+        // Sync is secondary - only sync, don't dispatch UPDATE (DRAW_MOVE already updated state)
+        // Use the coordinates directly from the event to avoid stale data
         if (currentElementIdRef.current) {
-          const currentElement = getCurrentElement();
-          if (currentElement) {
-            const change = createChange({
-              elementId: currentElement.id,
-              type: REALTIME_CHANGE_TYPES.UPDATE,
-              updates: {
-                x2: currentElement.x2,
-                y2: currentElement.y2,
-              },
-              source: CHANGE_SOURCES.LOCAL,
-            });
-            applyChange(change, false, true); // true = throttle
+          // Create change object for sync only (not for local state update)
+          const change = createChange({
+            elementId: currentElementIdRef.current,
+            type: REALTIME_CHANGE_TYPES.UPDATE,
+            updates: {
+              x2: clientX,
+              y2: clientY,
+            },
+            source: CHANGE_SOURCES.LOCAL,
+          });
+          
+          // Sync only - don't call applyChange which would dispatch UPDATE to reducer
+          // DRAW_MOVE already updated the reducer, so we only need to sync to socket
+          // This prevents double-dispatch and stale data issues
+          if (socket?.connected) {
+            setTimeout(() => {
+              try {
+                if (socket?.connected) {
+                  socket.emit('element-update', change);
+                }
+              } catch (error) {
+                console.warn('Shape sync failed (non-blocking):', error);
+              }
+            }, 0);
           }
         }
         return;

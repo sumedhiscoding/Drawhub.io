@@ -11,11 +11,18 @@ export const useBoardSync = ({ socket }) => {
   const { dispatchBoardAction } = useContext(BoardContext);
   const pendingFinalSyncRef = useRef(null); // Track pending final sync
 
-  // Immediate sync (for final changes)
+  // Immediate sync (for final changes) - completely non-blocking
   const immediateSync = useCallback(
     (change) => {
-      if (socket && socket.connected) {
-        socket.emit('element-update', change);
+      // Quick check - don't block if socket not ready
+      if (socket?.connected) {
+        try {
+          // Fire and forget - never block
+          socket.emit('element-update', change);
+        } catch (error) {
+          // Silently fail - don't block drawing
+          console.warn('Socket emit failed (non-blocking):', error);
+        }
       }
     },
     [socket],
@@ -25,7 +32,8 @@ export const useBoardSync = ({ socket }) => {
 
   const applyChange = useCallback(
     (change, isRemote = false, throttle = false) => {
-      // Dispatch to reducer
+      // CRITICAL: Dispatch to reducer FIRST - this is what makes drawing work
+      // This must never wait for socket operations
       dispatchBoardAction({
         type: change.type,
         payload: {
@@ -35,27 +43,45 @@ export const useBoardSync = ({ socket }) => {
         },
       });
 
-      if (!isRemote && socket && socket.connected) {
-        if (throttle) {
-          // Throttled sync for ongoing drawings
-          throttledSync(change);
-          // Store for final sync on completion
-          pendingFinalSyncRef.current = change;
-        } else {
-          // Immediate sync for final changes
-          immediateSync(change);
-          pendingFinalSyncRef.current = null;
-        }
+      // Sync is secondary - completely async and fire-and-forget
+      // Never block drawing on sync operations
+      if (!isRemote && socket?.connected) {
+        // Use setTimeout to ensure sync is completely async
+        // This ensures reducer dispatch happens immediately
+        setTimeout(() => {
+          try {
+            if (throttle) {
+              // Throttled sync for ongoing drawings
+              throttledSync(change);
+              // Store for final sync on completion
+              pendingFinalSyncRef.current = change;
+            } else {
+              // Immediate sync for final changes
+              immediateSync(change);
+              pendingFinalSyncRef.current = null;
+            }
+          } catch (error) {
+            // Silently fail - drawing should never be blocked by sync
+            console.warn('Sync failed (non-blocking):', error);
+          }
+        }, 0);
       }
     },
     [socket, dispatchBoardAction, immediateSync, throttledSync],
   );
 
-  // Flush any pending throttled sync (call on draw completion)
+  // Flush any pending throttled sync (call on draw completion) - non-blocking
   const flushPendingSync = useCallback(() => {
-    if (pendingFinalSyncRef.current && socket && socket.connected) {
-      immediateSync(pendingFinalSyncRef.current);
-      pendingFinalSyncRef.current = null;
+    if (pendingFinalSyncRef.current && socket?.connected) {
+      // Make flush async too
+      setTimeout(() => {
+        try {
+          immediateSync(pendingFinalSyncRef.current);
+          pendingFinalSyncRef.current = null;
+        } catch (error) {
+          console.warn('Flush sync failed (non-blocking):', error);
+        }
+      }, 0);
     }
   }, [socket, immediateSync]);
 
