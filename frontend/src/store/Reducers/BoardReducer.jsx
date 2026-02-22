@@ -379,9 +379,39 @@ const BoardReducer = (state, action) => {
           };
           
           return { ...state, elements: [...elements, newElement] };
+        } else if (updates.type && updates.x2 !== undefined && updates.y2 !== undefined) {
+          // It's a shape element - create from updates
+          // Type is included in updates for remote creation
+          const shapeType = updates.type;
+          const newElement = {
+            id: action.payload.elementId,
+            ownerId: getLocalUserId(), // Will be overridden by actual owner when ADD arrives
+            type: shapeType,
+            x1: updates.x1 || 0,
+            y1: updates.y1 || 0,
+            x2: updates.x2,
+            y2: updates.y2,
+            strokeWidth: updates.strokeWidth || 2,
+            color: updates.color || '#000',
+            fill: updates.fill,
+            fillStyle: updates.fillStyle,
+            roughElement: createTool(
+              shapeType,
+              updates.x1 || 0,
+              updates.y1 || 0,
+              updates.x2,
+              updates.y2,
+              updates.color || '#000',
+              [],
+              updates.strokeWidth || 2,
+              updates.fill,
+              updates.fillStyle,
+            ),
+          };
+          
+          return { ...state, elements: [...elements, newElement] };
         } else if (updates.x2 !== undefined && updates.y2 !== undefined) {
-          // It's likely a shape, but we don't have enough info to create it properly
-          // Just log and skip - wait for ADD
+          // Shape update without type - wait for ADD
           console.warn('⚠️ UPDATE for shape element received before ADD - cannot create without type. Waiting for ADD...', {
             elementId: action.payload.elementId,
           });

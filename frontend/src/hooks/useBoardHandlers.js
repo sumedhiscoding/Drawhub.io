@@ -270,13 +270,25 @@ export const useBoardHandlers = () => {
         // Sync is secondary - only sync, don't dispatch UPDATE (DRAW_MOVE already updated state)
         // Use the coordinates directly from the event to avoid stale data
         if (currentElementIdRef.current) {
+          // Get current element to include all necessary properties for remote creation
+          const currentElement = getCurrentElement();
+          
           // Create change object for sync only (not for local state update)
+          // Include type and all properties needed to create the element if it doesn't exist
+          // Note: currentElement should always exist on sender side, but we use defaults for safety
           const change = createChange({
             elementId: currentElementIdRef.current,
             type: REALTIME_CHANGE_TYPES.UPDATE,
             updates: {
+              type: activeTool.id, // Include type so remote can create element
+              x1: currentElement?.x1 ?? 0, // Use nullish coalescing for better defaults
+              y1: currentElement?.y1 ?? 0,
               x2: clientX,
               y2: clientY,
+              color: currentElement?.color || styles.stroke,
+              strokeWidth: currentElement?.strokeWidth || styles.size,
+              fill: currentElement?.fill ?? styles.fillcolor,
+              fillStyle: currentElement?.fillStyle ?? styles.fillStyle,
             },
             source: CHANGE_SOURCES.LOCAL,
           });
