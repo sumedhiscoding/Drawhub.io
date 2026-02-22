@@ -1,12 +1,11 @@
 import request from 'supertest';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import app from '../app.js';
-import connectDatabase from '../config/db.js';
-import { sql } from 'slonik';
+import connectDatabase, { execute, closePool } from '../config/db.js';
+import { sql } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 
 describe('Users API', () => {
-    let pool;
     let testUser;
     let authToken;
     const testUserData = {
@@ -16,25 +15,25 @@ describe('Users API', () => {
     };
 
     beforeAll(async () => {
-        pool = await connectDatabase();
+        await connectDatabase();
     });
 
     afterAll(async () => {
         // Clean up test data
         if (testUser) {
             try {
-                await pool.query(sql.unsafe`DELETE FROM users WHERE email = ${testUserData.email}`);
+                await execute(sql`DELETE FROM users WHERE email = ${testUserData.email}`);
             } catch (error) {
                 // Ignore cleanup errors
             }
         }
-        await pool.end();
+        await closePool();
     });
 
     beforeEach(async () => {
         // Clean up before each test
         try {
-            await pool.query(sql.unsafe`DELETE FROM users WHERE email = ${testUserData.email}`);
+            await execute(sql`DELETE FROM users WHERE email = ${testUserData.email}`);
         } catch (error) {
             // Ignore cleanup errors
         }

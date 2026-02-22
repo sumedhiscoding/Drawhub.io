@@ -7,13 +7,16 @@ import {
   SOURCE_TYPES,
   TOOL_ACTION_TYPE,
   TOOLS,
-  generateElementId,
-  getLocalUserId,
   ALLOWED_METHODS,
 } from '../utils/constants';
 import ToolboxContext from '../store/Context/ToolBoxContext';
 import useCanvasSocket from './useCanvasSocket';
-import { createTool, isPointNearElement } from '../utils/helpers';
+import {
+  createTool,
+  isPointNearElement,
+  generateElementId,
+  getLocalUserId,
+} from '../utils/helpers';
 
 /**
  * Handles remote canvas updates from socket

@@ -31,11 +31,7 @@ const Board = () => {
   useCanvasSetup(canvasRef);
 
   // Fetch canvas data and sync with BoardContext
-  const { isInitialLoad, canvasData } = useCanvasFetch(
-    canvasId,
-    dispatchBoardAction,
-    canvasDataRef
-  );
+  const { isInitialLoad } = useCanvasFetch(canvasId, dispatchBoardAction, canvasDataRef);
 
   // Sync fetched elements with BoardContext
   useEffect(() => {
@@ -44,14 +40,14 @@ const Board = () => {
         type: ALLOWED_METHODS.SET_ELEMENTS,
         payload: canvasDataRef.current.elements,
       });
-    } 
-  }, [canvasDataRef, dispatchBoardAction]);
+    }
+  }, [canvasDataRef.current?.elements, dispatchBoardAction]);
 
   // Use BoardContext.elements for canvas updates and drawing (source of truth)
   useCanvasUpdate(canvasId, elements, isInitialLoad, updateSourceRef);
 
   // Draw elements from BoardContext (single source of truth)
-  useCanvasDraw(canvasRef, elements , updateSourceRef);
+  useCanvasDraw(canvasRef, elements, updateSourceRef);
 
   // Focus textarea when in WRITE mode
   useTextAreaFocus(textAreaRef, ToolActionType);

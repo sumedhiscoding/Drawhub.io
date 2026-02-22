@@ -1,12 +1,11 @@
 import request from 'supertest';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import app from '../app.js';
-import connectDatabase from '../config/db.js';
-import { sql } from 'slonik';
+import connectDatabase, { execute, closePool } from '../config/db.js';
+import { sql } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 
 describe('Canvas API', () => {
-    let pool;
     let testUser;
     let authToken;
     let testCanvas;
@@ -27,33 +26,33 @@ describe('Canvas API', () => {
     };
 
     beforeAll(async () => {
-        pool = await connectDatabase();
+        await connectDatabase();
     });
 
     afterAll(async () => {
         // Clean up test data
         if (testCanvas) {
             try {
-                await pool.query(sql.unsafe`DELETE FROM canvas WHERE id = ${testCanvas.id}`);
+                await execute(sql`DELETE FROM canvas WHERE id = ${testCanvas.id}`);
             } catch (error) {
                 // Ignore cleanup errors
             }
         }
         if (testUser) {
             try {
-                await pool.query(sql.unsafe`DELETE FROM users WHERE email = ${testUserData.email}`);
+                await execute(sql`DELETE FROM users WHERE email = ${testUserData.email}`);
             } catch (error) {
                 // Ignore cleanup errors
             }
         }
-        await pool.end();
+        await closePool();
     });
 
     beforeEach(async () => {
         // Clean up before each test
         try {
-            await pool.query(sql.unsafe`DELETE FROM canvas WHERE owner_id IN (SELECT id FROM users WHERE email = ${testUserData.email})`);
-            await pool.query(sql.unsafe`DELETE FROM users WHERE email = ${testUserData.email}`);
+            await execute(sql`DELETE FROM canvas WHERE owner_id IN (SELECT id FROM users WHERE email = ${testUserData.email})`);
+            await execute(sql`DELETE FROM users WHERE email = ${testUserData.email}`);
         } catch (error) {
             // Ignore cleanup errors
         }
@@ -294,8 +293,8 @@ describe('Canvas API', () => {
         beforeEach(async () => {
             // Clean up shared user if exists
             try {
-                await pool.query(sql.unsafe`DELETE FROM canvas WHERE owner_id IN (SELECT id FROM users WHERE email = 'shareduser@example.com')`);
-                await pool.query(sql.unsafe`DELETE FROM users WHERE email = 'shareduser@example.com'`);
+                await execute(sql`DELETE FROM canvas WHERE owner_id IN (SELECT id FROM users WHERE email = 'shareduser@example.com')`);
+                await execute(sql`DELETE FROM users WHERE email = 'shareduser@example.com'`);
             } catch (error) {
                 // Ignore cleanup errors
             }

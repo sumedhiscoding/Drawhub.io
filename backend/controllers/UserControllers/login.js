@@ -1,15 +1,13 @@
-import connectDatabase from '../../config/db.js';
+import { one, NotFoundError } from '../../config/db.js';
 import logger from '../../config/logger.js';
 import bcrypt from 'bcrypt';
 import { findUserByEmail } from '../../models/queries/user.queries.js';
 import mapUserRow from '../../models/mappers/user.mapper.js';
-import { NotFoundError } from 'slonik';
 
 const loginUser = async (email, password) => {
     try {
         logger.info(`Logging in user: ${email}, ${password}`);
-        const pool = await connectDatabase();
-        const user = await pool.one(findUserByEmail(email));
+        const user = await one(findUserByEmail(email));
         const mappedUser = mapUserRow(user);
         if (!mappedUser) {
             logger.error(`User not found: ${email}`);
@@ -22,7 +20,6 @@ const loginUser = async (email, password) => {
         const { password: _, ...userWithoutPassword } = mappedUser;
         return userWithoutPassword;
     } catch (error) {
-        // Handle case where user doesn't exist
         if (error instanceof NotFoundError || error.code === 'ERR_UNHANDLED_ERROR' || error.message?.includes('no rows')) {
             return null;
         }
@@ -32,4 +29,3 @@ const loginUser = async (email, password) => {
 };
 
 export default loginUser;
-

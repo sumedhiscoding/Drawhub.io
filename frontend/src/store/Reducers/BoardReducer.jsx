@@ -1,11 +1,10 @@
+import { ALLOWED_METHODS, TOOLS, TOOL_ACTION_TYPE } from '../../utils/constants';
 import {
-  ALLOWED_METHODS,
-  TOOLS,
-  TOOL_ACTION_TYPE,
+  createTool,
+  isPointNearElement,
   generateElementId,
   getLocalUserId,
-} from '../../utils/constants';
-import { createTool, isPointNearElement } from '../../utils/helpers';
+} from '../../utils/helpers';
 
 /**
  * Board Reducer - SINGLE SOURCE OF TRUTH for elements

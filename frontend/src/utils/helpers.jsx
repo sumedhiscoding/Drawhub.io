@@ -214,3 +214,24 @@ const isPointNearPolygon = (x, y, points, offset) => {
   }
   return false;
 };
+
+/**
+ * Generate a unique element ID
+ */
+export const generateElementId = () => {
+  return `elem-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+/**
+ * Get current user ID from localStorage
+ * Falls back to 'anonymous' if user is not logged in
+ */
+export const getLocalUserId = () => {
+  const rawUser = localStorage.getItem('user');
+  if (!rawUser) return 'anonymous';
+  try {
+    const parsed = JSON.parse(rawUser);
+    return parsed?.id ?? parsed?.userId ?? 'anonymous';
+  } catch {
+    return 'anonymous';
+  }
+};

@@ -1,17 +1,14 @@
-import connectDatabase from '../../config/db.js';
+import { one, maybeOne, NotFoundError } from '../../config/db.js';
 import logger from '../../config/logger.js';
 import { findCanvasByIdQuery, updateCanvasQuery } from '../../models/queries/canvas.queries.js';
 import { findUserByEmail } from '../../models/queries/user.queries.js';
 import { mapCanvasRow } from '../../models/mappers/canvas.mapper.js';
 import { mapUserRowWithoutPassword } from '../../models/mappers/user.mapper.js';
-import { NotFoundError } from 'slonik';
 
 export const shareCanvas = async (canvasId, ownerId, email) => {
     try {
-        const pool = await connectDatabase();
-        
         // Find the canvas
-        const canvas = await pool.one(findCanvasByIdQuery(canvasId));
+        const canvas = await one(findCanvasByIdQuery(canvasId));
         if (!canvas) {
             throw new Error('Canvas not found');
         }
@@ -22,7 +19,7 @@ export const shareCanvas = async (canvasId, ownerId, email) => {
         }
         
         // Find user by email
-        const userToShare = await pool.maybeOne(findUserByEmail(email));
+        const userToShare = await maybeOne(findUserByEmail(email));
         if (!userToShare) {
             throw new Error('User with this email not found');
         }
@@ -44,7 +41,7 @@ export const shareCanvas = async (canvasId, ownerId, email) => {
         const updatedSharedIds = [...currentSharedIds, userToShare.id];
         
         // Update canvas with new shared_with_ids
-        const updatedCanvas = await pool.one(updateCanvasQuery({
+        const updatedCanvas = await one(updateCanvasQuery({
             id: canvasId,
             shared_with_ids: updatedSharedIds
         }));
@@ -64,4 +61,3 @@ export const shareCanvas = async (canvasId, ownerId, email) => {
         throw error;
     }
 };
-

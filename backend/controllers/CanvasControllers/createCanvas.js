@@ -1,12 +1,11 @@
-import connectDatabase from '../../config/db.js';
+import { one, NotFoundError } from '../../config/db.js';
 import logger from '../../config/logger.js';
 import { createCanvasQuery } from '../../models/queries/canvas.queries.js';
 import { mapCanvasRow } from '../../models/mappers/canvas.mapper.js';
 
 export const createCanvas = async (name, owner_id, options = {}) => {
     try {
-        const pool = await connectDatabase();
-        const canvas = await pool.one(createCanvasQuery({ 
+        const canvas = await one(createCanvasQuery({ 
             name, 
             owner_id,
             description: options.description,

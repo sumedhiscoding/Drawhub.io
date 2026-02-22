@@ -1,12 +1,12 @@
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import { sql } from 'slonik';
+import { sql } from 'drizzle-orm';
 import logger from '../config/logger.js';
 import { socketConfig } from './config.js';
 import { registerCanvasHandlers } from './handlers/canvas.socket.js';
 import { registerUserHandlers } from './handlers/user.socket.js';
 import { registerTestHandlers } from './handlers/test.socket.js';
-import connectDatabase from '../config/db.js';
+import { any } from '../config/db.js';
 
 /**
  * Socket authentication middleware
@@ -24,8 +24,7 @@ const authenticateSocket = async (socket, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     
     // Fetch user from database
-    const pool = await connectDatabase();
-    const users = await pool.any(sql.unsafe`SELECT * FROM users WHERE id = ${decoded.sub}`);
+    const users = await any(sql`SELECT * FROM users WHERE id = ${decoded.sub}`);
     
     if (users.length === 0) {
       logger.warn(`Socket connection rejected: User not found for ${socket.id}`);

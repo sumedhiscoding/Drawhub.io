@@ -5,9 +5,8 @@ import { ALLOWED_METHODS } from '../utils/constants';
  * Custom hook to fetch canvas data from the API
  * Returns isInitialLoad ref and canvas data
  */
-export const useCanvasFetch = (canvasId, dispatchBoardAction,canvasDataRef) => {
+export const useCanvasFetch = (canvasId, dispatchBoardAction, canvasDataRef) => {
   const isInitialLoad = useRef(true);
-  
 
   useEffect(() => {
     const fetchCanvas = async () => {
@@ -39,7 +38,7 @@ export const useCanvasFetch = (canvasId, dispatchBoardAction,canvasDataRef) => {
     };
 
     fetchCanvas();
-  }, [canvasId]);
+  }, [canvasId, canvasDataRef, dispatchBoardAction]);
 
   return { isInitialLoad, canvasData: canvasDataRef.current };
 };

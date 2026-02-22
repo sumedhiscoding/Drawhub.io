@@ -1,4 +1,4 @@
-import connectDatabase from '../../config/db.js';
+import { one } from '../../config/db.js';
 import logger from '../../config/logger.js';
 import { updateUserPassword, findUserById } from '../../models/queries/user.queries.js';
 import { hashPassword } from '../../utils/hashing.js';
@@ -7,8 +7,7 @@ import { mapUserRow } from '../../models/mappers/user.mapper.js';
 
 const updatePassword = async (id, oldPassword, newPassword) => {
     try {
-        const pool = await connectDatabase();
-        const user = await pool.one(findUserById(id));
+        const user = await one(findUserById(id));
         const mappedUser = mapUserRow(user);
         
         // Verify old password
@@ -21,7 +20,7 @@ const updatePassword = async (id, oldPassword, newPassword) => {
         const hashedPassword = await hashPassword(newPassword);
         
         // Update password
-        const updatedUser = await pool.one(updateUserPassword({ id, password: hashedPassword }));
+        const updatedUser = await one(updateUserPassword({ id, password: hashedPassword }));
         const { password: _, ...userWithoutPassword } = updatedUser;
         return userWithoutPassword;
     } catch (error) {
@@ -31,4 +30,3 @@ const updatePassword = async (id, oldPassword, newPassword) => {
 };
 
 export default updatePassword;
-
