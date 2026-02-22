@@ -77,8 +77,6 @@ export const ALLOWED_METHODS = {
   SAVE_TEXT: 'SAVE_TEXT',
   UNDO: 'UNDO',
   REDO: 'REDO',
-  REMOTE_UNDO: 'REMOTE_UNDO',
-  REMOTE_REDO: 'REMOTE_REDO',
   APPLY_PATCH: 'APPLY_PATCH',
 };
 
@@ -125,23 +123,6 @@ export const easingOptions = [
   'EaseOutQuart',
   'EaseInOutQuart',
 ];
-
-export const CANVAS_COMMANDS = {
-  DRAW_DOWN: 'DRAW_DOWN',
-  DRAW_MOVE: 'DRAW_MOVE',
-  DRAW_UP: 'DRAW_UP',
-  ERASE_ELEMENT: 'ERASE_ELEMENT',
-  ADD_TEXT: 'ADD_TEXT',
-  SAVE_TEXT: 'SAVE_TEXT',
-  UNDO: 'UNDO',
-  REDO: 'REDO',
-};
-
-export const DEFAULT_NAMESPACE = '/canvas';
-export const SOURCE_TYPES = {
-  LOCAL: 'local',
-  REMOTE: 'remote',
-};
 
 export const TOOL_BOX_ACTIONS = {
   SET_PENCIL_PROP: 'SET_PENCIL_PROP',

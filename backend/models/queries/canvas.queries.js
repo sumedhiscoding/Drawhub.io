@@ -120,3 +120,8 @@ export const deleteCanvasQuery = (id, owner_id) => sql`
     AND owner_id = ${owner_id}
     RETURNING id, name, description, owner_id, shared_with_ids, elements, background_color, background_image_url, created_at, updated_at
 `;
+
+export const deleteAllCanvasesQuery = () => sql`
+    DELETE FROM canvas
+    RETURNING id, name, description, owner_id, shared_with_ids, elements, background_color, background_image_url, created_at, updated_at
+`;

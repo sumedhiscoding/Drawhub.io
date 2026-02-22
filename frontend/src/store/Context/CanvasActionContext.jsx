@@ -5,10 +5,6 @@ export const CanvasActionsContext = React.createContext({
   handleRedo: () => {},
   canUndo: false,
   canRedo: false,
-  connectionState: 'disconnected',
-  isInRoom: false,
-  joinCanvasRoom: () => {},
-  leaveCanvasRoom: () => {},
   setHandlers: () => {},
 });
 

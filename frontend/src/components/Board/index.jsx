@@ -1,9 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useContext } from 'react';
 import { BoardContext } from '../../store/Context/BoardContext';
 import { CanvasActionsContext } from '../../store/Context/CanvasActionContext';
 import { useParams } from 'react-router';
-import { SOURCE_TYPES, TOOL_ACTION_TYPE } from '../../utils/constants';
-import { ALLOWED_METHODS } from '../../utils/constants';
+import { TOOL_ACTION_TYPE } from '../../utils/constants';
 import toolboxContext from '../../store/Context/ToolBoxContext';
 import { Textarea } from '@/components/ui/textarea';
 import { useCanvasSetup } from '../../hooks/useCanvasSetup';
@@ -16,38 +15,28 @@ import { useBoardHandlers } from '../../hooks/useBoardHandlers';
 const Board = () => {
   const canvasRef = useRef(null);
   const textAreaRef = useRef(null);
-  const updateSourceRef = useRef(SOURCE_TYPES.LOCAL);
   const canvasDataRef = useRef(null);
   const { id: canvasId } = useParams();
 
   // BoardContext.elements is the SINGLE SOURCE OF TRUTH
   const { activeTool, ToolActionType, elements, dispatchBoardAction } =
-    React.useContext(BoardContext);
+    useContext(BoardContext);
 
-  const { toolBoxState } = React.useContext(toolboxContext);
-  const { setHandlers } = React.useContext(CanvasActionsContext);
+  const { toolBoxState } = useContext(toolboxContext);
+  const { setHandlers } = useContext(CanvasActionsContext);
 
   // Setup canvas with window size
   useCanvasSetup(canvasRef);
 
   // Fetch canvas data and sync with BoardContext
+  // Note: useCanvasFetch already dispatches SET_ELEMENTS when data is fetched
   const { isInitialLoad } = useCanvasFetch(canvasId, dispatchBoardAction, canvasDataRef);
 
-  // Sync fetched elements with BoardContext
-  useEffect(() => {
-    if (canvasDataRef.current?.elements) {
-      dispatchBoardAction({
-        type: ALLOWED_METHODS.SET_ELEMENTS,
-        payload: canvasDataRef.current.elements,
-      });
-    }
-  }, [canvasDataRef.current?.elements, dispatchBoardAction]);
-
   // Use BoardContext.elements for canvas updates and drawing (source of truth)
-  useCanvasUpdate(canvasId, elements, isInitialLoad, updateSourceRef);
+  useCanvasUpdate(canvasId, elements, isInitialLoad);
 
   // Draw elements from BoardContext (single source of truth)
-  useCanvasDraw(canvasRef, elements, updateSourceRef);
+  useCanvasDraw(canvasRef, elements);
 
   // Focus textarea when in WRITE mode
   useTextAreaFocus(textAreaRef, ToolActionType);
@@ -62,38 +51,17 @@ const Board = () => {
     handleRedo,
     canUndo,
     canRedo,
-    connectionState,
-    isInRoom,
-    joinCanvasRoom,
-    leaveCanvasRoom,
-  } = useBoardHandlers({
-    canvasId: canvasId,
-    updateSourceRef,
-  });
+  } = useBoardHandlers();
 
-  // Share socket-aware undo/redo handlers with Toolbar via context
+  // Register undo/redo handlers with CanvasActionsContext for toolbar access
   useEffect(() => {
     setHandlers({
       handleUndo,
       handleRedo,
       canUndo,
       canRedo,
-      connectionState,
-      isInRoom,
-      joinCanvasRoom,
-      leaveCanvasRoom,
     });
-  }, [
-    handleUndo,
-    handleRedo,
-    canUndo,
-    canRedo,
-    connectionState,
-    isInRoom,
-    joinCanvasRoom,
-    leaveCanvasRoom,
-    setHandlers,
-  ]);
+  }, [setHandlers, handleUndo, handleRedo, canUndo, canRedo]);
 
   return (
     <>

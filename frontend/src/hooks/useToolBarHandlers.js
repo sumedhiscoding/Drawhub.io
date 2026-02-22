@@ -1,11 +1,10 @@
-import { useState, useCallback, useEffect, useRef, useContext } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { CanvasActionsContext } from '../store/Context/CanvasActionContext';
 
 /**
- * Production-grade custom hook for managing canvas sharing functionality
- * Handles email management, sharing, user access, and live status
+ * Custom hook for managing canvas sharing functionality
+ * Handles email management, sharing, and user access
  *
  * @param {string} canvasId - The ID of the canvas to share
  * @returns {Object} Object containing all sharing-related state and functions
@@ -19,11 +18,6 @@ export const useToolBarHandlers = (canvasId) => {
   const [sharedUsers, setSharedUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [removingAccess, setRemovingAccess] = useState(null);
-
-  const { connectionState, isInRoom, joinCanvasRoom, leaveCanvasRoom } =
-    useContext(CanvasActionsContext);
-
-  const isLive = connectionState === 'connected' && isInRoom;
 
   // Input refs for email fields
   const inputRefs = useRef({});
@@ -106,17 +100,6 @@ export const useToolBarHandlers = (canvasId) => {
       setLoadingUsers(false);
     }
   }, [canvasId]);
-
-  /**
-   * Checks the live status of the canvas
-   * Note: Live status is now determined by socket connection and room membership
-   * This function is kept for potential future use but currently not needed
-   */
-  const checkLiveStatus = useCallback(async () => {
-    // Live status is now managed through socket events (canvas:joined, canvas:owner-joined)
-    // No need to check via API endpoint
-    // This function is kept for potential future implementation
-  }, []);
 
   /**
    * Shares the canvas with the provided email addresses
@@ -232,29 +215,10 @@ export const useToolBarHandlers = (canvasId) => {
     [canvasId, fetchSharedUsers],
   );
 
-  /**
-   * Toggles the live status of the canvas
-   * Emits canvas:join event to join the canvas room
-   */
-  const handleGoLive = useCallback(async () => {
-    if (!canvasId) {
-      toast.error('Canvas not available');
-      return;
-    }
-
-    if (isLive) {
-      leaveCanvasRoom(canvasId);
-      return;
-    }
-
-    joinCanvasRoom(canvasId);
-  }, [canvasId, isLive, joinCanvasRoom, leaveCanvasRoom]);
-
   // Fetch shared users on mount and when canvasId changes
   useEffect(() => {
     if (canvasId) {
       fetchSharedUsers();
-      // Live status is now managed through socket events, no need to check via API
     }
   }, [canvasId, fetchSharedUsers]);
 
@@ -277,12 +241,6 @@ export const useToolBarHandlers = (canvasId) => {
     fetchSharedUsers,
     handleRemoveAccess,
     removingAccess,
-
-    // Live status
-    isLive,
-    connectionState,
-    checkLiveStatus,
-    handleGoLive,
   };
 };
 

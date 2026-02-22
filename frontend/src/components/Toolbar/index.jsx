@@ -4,13 +4,11 @@ import { useToolBarHandlers } from '../../hooks/useToolBarHandlers';
 import ToolButtons from './ToolButtons';
 import ToolSettings from './ToolSettings';
 import ShareDialog from './ShareDialog';
-import GoLiveButton from './GoLiveButton';
 
 const Toolbar = () => {
   const { id: canvasId } = useParams();
 
-  const { handleGoLive, isLive, connectionState, ...toolBarHandlersProps } =
-    useToolBarHandlers(canvasId);
+  const toolBarHandlersProps = useToolBarHandlers(canvasId);
 
   return (
     <div className="toolbar">
@@ -18,11 +16,6 @@ const Toolbar = () => {
         <ToolButtons />
         <ToolSettings />
         <ShareDialog shareProps={toolBarHandlersProps} />
-        <GoLiveButton
-          isLive={isLive}
-          handleGoLive={handleGoLive}
-          connectionState={connectionState}
-        />
       </div>
     </div>
   );

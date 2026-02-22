@@ -2,15 +2,11 @@ import React, { useCallback, useContext, useRef, useEffect } from 'react';
 import { BoardContext } from '../store/Context/BoardContext';
 import { useHistory } from '../store/History';
 import {
-  CANVAS_COMMANDS,
-  DEFAULT_NAMESPACE,
-  SOURCE_TYPES,
   TOOL_ACTION_TYPE,
   TOOLS,
   ALLOWED_METHODS,
 } from '../utils/constants';
 import ToolboxContext from '../store/Context/ToolBoxContext';
-import useCanvasSocket from './useCanvasSocket';
 import {
   createTool,
   isPointNearElement,
@@ -18,115 +14,24 @@ import {
   getLocalUserId,
 } from '../utils/helpers';
 
-/**
- * Handles remote canvas updates from socket
- */
-const handleCanvasUpdate = (update, dispatchBoardAction) => {
-  if (!update || !update.command) {
-    return;
-  }
-
-  const { command, elements, payload } = update;
-
-  switch (command) {
-    case CANVAS_COMMANDS.DRAW_DOWN:
-    case CANVAS_COMMANDS.ADD_TEXT: {
-      if (elements && elements.length > 0) {
-        const remoteElement = elements[0];
-        dispatchBoardAction({
-          type: ALLOWED_METHODS.DRAW_DOWN,
-          payload: remoteElement,
-        });
-      }
-      break;
-    }
-    case CANVAS_COMMANDS.DRAW_MOVE: {
-      const elementId = payload?.elementId || elements?.[0]?.id;
-      const movePayload = elements?.[0];
-
-      if (!elementId || !movePayload) {
-        break;
-      }
-
-      // For remote DRAW_MOVE, we dispatch with element data
-      dispatchBoardAction({
-        type: ALLOWED_METHODS.DRAW_MOVE,
-        payload: movePayload,
-      });
-      break;
-    }
-    case CANVAS_COMMANDS.DRAW_UP: {
-      dispatchBoardAction({
-        type: ALLOWED_METHODS.DRAW_UP,
-        payload: TOOL_ACTION_TYPE.NONE,
-      });
-      break;
-    }
-    case CANVAS_COMMANDS.ERASE_ELEMENT: {
-      if (elements && elements.length > 0) {
-        dispatchBoardAction({
-          type: ALLOWED_METHODS.ERASE_ELEMENT,
-          payload: elements[0],
-        });
-      }
-      break;
-    }
-    case CANVAS_COMMANDS.SAVE_TEXT: {
-      if (payload?.text !== undefined) {
-        dispatchBoardAction({
-          type: ALLOWED_METHODS.SAVE_TEXT,
-          payload: { text: payload.text },
-        });
-      }
-      break;
-    }
-    case CANVAS_COMMANDS.UNDO: {
-      if (payload?.elementId) {
-        dispatchBoardAction({
-          type: ALLOWED_METHODS.REMOTE_UNDO,
-          payload: { elementId: payload.elementId },
-        });
-      }
-      break;
-    }
-    case CANVAS_COMMANDS.REDO: {
-      if (payload?.element) {
-        dispatchBoardAction({
-          type: ALLOWED_METHODS.REMOTE_REDO,
-          payload: { element: payload.element },
-        });
-      }
-      break;
-    }
-    default:
-      console.warn('Unknown canvas command:', command);
-  }
-};
 const stripForHistory = (element) => {
   if (!element) return null;
   const { roughElement, ...minimal } = element;
   return minimal;
 };
+
 /**
  * Custom hook to handle board mouse events, text area blur, and undo/redo
  *
  * Single source of truth: BoardContext.elements
  * History (XState): Only tracks diffs for undo/redo navigation
  */
-export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
+export const useBoardHandlers = () => {
   const { activeTool, ToolActionType, elements, dispatchBoardAction } = useContext(BoardContext);
   const { toolBoxState } = useContext(ToolboxContext);
   const history = useHistory();
 
   const { canUndo, canRedo, record, undo: historyUndo, redo: historyRedo, lastPatch } = history;
-
-  // Wrapper that passes dispatchBoardAction to handleCanvasUpdate
-  const onCanvasUpdate = useCallback(
-    (update) => {
-      handleCanvasUpdate(update, dispatchBoardAction);
-    },
-    [dispatchBoardAction],
-  );
 
   const elementsRef = useRef(elements);
   useEffect(() => {
@@ -136,57 +41,25 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
   // Track the element being drawn (for recording to history on DRAW_UP)
   const currentElementIdRef = useRef(null);
   const drawStartElementRef = useRef(null); // Store the element state at start
+  const lastProcessedPatchRef = useRef(null); // Track processed patches to prevent infinite loops
 
-  const handleSyncState = useCallback(
-    (syncData) => {
-      if (!syncData?.elements) {
-        return;
-      }
-
-      if (updateSourceRef) {
-        updateSourceRef.current = SOURCE_TYPES.REMOTE;
-      }
-      dispatchBoardAction({
-        type: ALLOWED_METHODS.SET_ELEMENTS,
-        payload: syncData.elements,
-      });
-    },
-    [dispatchBoardAction, updateSourceRef],
-  );
-
-  const getSyncState = useCallback(() => {
-    return { elements: elementsRef.current || [] };
-  }, []);
-
-  const { emitCanvasUpdate, connectionState, isInRoom, joinCanvasRoom, leaveCanvasRoom } =
-    useCanvasSocket({
-      canvasId,
-      namespace: DEFAULT_NAMESPACE,
-      onCanvasUpdate,
-      updateSourceRef,
-      getSyncState,
-      onSyncState: handleSyncState,
-      autoJoin: false,
-      autoSync: true,
-    });
-
-  const markLocalUpdate = useCallback(() => {
-    if (updateSourceRef) {
-      updateSourceRef.current = SOURCE_TYPES.LOCAL;
-    }
-  }, [updateSourceRef]);
-
-  // Apply patches from undo/redo
+  // Apply patches from undo/redo (with guard to prevent infinite loops)
   useEffect(() => {
-    if (lastPatch && lastPatch.patch !== undefined) {
-      dispatchBoardAction({
-        type: ALLOWED_METHODS.APPLY_PATCH,
-        payload: {
-          patch: lastPatch.patch,
-          elementId: lastPatch.elementId,
-        },
-      });
+    // Skip if no patch, or if we've already processed this exact patch
+    if (!lastPatch || lastPatch.patch === undefined || lastPatch === lastProcessedPatchRef.current) {
+      return;
     }
+    
+    // Mark this patch as processed before dispatching
+    lastProcessedPatchRef.current = lastPatch;
+    
+    dispatchBoardAction({
+      type: ALLOWED_METHODS.APPLY_PATCH,
+      payload: {
+        patch: lastPatch.patch,
+        elementId: lastPatch.elementId,
+      },
+    });
   }, [lastPatch, dispatchBoardAction]);
 
   // Throttling refs for smooth drawing
@@ -196,7 +69,6 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
 
   const handleMouseDown = useCallback(
     (event) => {
-      markLocalUpdate();
       if (ToolActionType === TOOL_ACTION_TYPE.WRITE) {
         return;
       }
@@ -239,12 +111,6 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
             type: ALLOWED_METHODS.DRAW_DOWN,
             payload: newElement,
           });
-          emitCanvasUpdate({
-            command: CANVAS_COMMANDS.DRAW_DOWN,
-            elements: [newElement],
-            source: SOURCE_TYPES.LOCAL,
-            updatedBy: userId,
-          });
           break;
         }
         case TOOLS.CIRCLE:
@@ -283,12 +149,6 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
             type: ALLOWED_METHODS.DRAW_DOWN,
             payload: newElement,
           });
-          emitCanvasUpdate({
-            command: CANVAS_COMMANDS.DRAW_DOWN,
-            elements: [newElement],
-            source: SOURCE_TYPES.LOCAL,
-            updatedBy: userId,
-          });
           break;
         }
         case TOOLS.ERASER: {
@@ -319,12 +179,6 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
             type: ALLOWED_METHODS.ADD_TEXT,
             payload: newElement,
           });
-          emitCanvasUpdate({
-            command: CANVAS_COMMANDS.ADD_TEXT,
-            elements: [newElement],
-            source: SOURCE_TYPES.LOCAL,
-            updatedBy: userId,
-          });
           break;
         }
         default:
@@ -335,15 +189,12 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
       activeTool,
       ToolActionType,
       toolBoxState,
-      markLocalUpdate,
       dispatchBoardAction,
-      emitCanvasUpdate,
     ],
   );
 
   const handleMouseMove = useCallback(
     (event) => {
-      markLocalUpdate();
       const { clientX, clientY } = event;
       if (ToolActionType === TOOL_ACTION_TYPE.WRITE) {
         return;
@@ -388,26 +239,6 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
                     streamline: moveData.streamline,
                   },
                 });
-                emitCanvasUpdate({
-                  command: CANVAS_COMMANDS.DRAW_MOVE,
-                  elements: [
-                    {
-                      type: activeTool.id,
-                      points: pointsToAdd,
-                      strokeWidth: moveData.strokeWidth,
-                      color: moveData.color,
-                      thinning: moveData.thinning,
-                      smoothing: moveData.smoothing,
-                      streamline: moveData.streamline,
-                      id: currentElementIdRef.current,
-                    },
-                  ],
-                  source: SOURCE_TYPES.LOCAL,
-                  updatedBy: getLocalUserId(),
-                  payload: {
-                    elementId: currentElementIdRef.current,
-                  },
-                });
               });
             }
             break;
@@ -427,26 +258,6 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
                 strokeWidth: toolBoxState[activeTool.name].size,
                 fill: toolBoxState[activeTool.name]?.fillcolor,
                 fillStyle: toolBoxState[activeTool.name]?.fillStyle,
-              },
-            });
-            emitCanvasUpdate({
-              command: CANVAS_COMMANDS.DRAW_MOVE,
-              elements: [
-                {
-                  type: activeTool.id,
-                  x2: clientX,
-                  y2: clientY,
-                  color: toolBoxState[activeTool.name].stroke,
-                  strokeWidth: toolBoxState[activeTool.name].size,
-                  fill: toolBoxState[activeTool.name]?.fillcolor,
-                  fillStyle: toolBoxState[activeTool.name]?.fillStyle,
-                  id: currentElementIdRef.current,
-                },
-              ],
-              source: SOURCE_TYPES.LOCAL,
-              updatedBy: getLocalUserId(),
-              payload: {
-                elementId: currentElementIdRef.current,
               },
             });
             break;
@@ -469,12 +280,6 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
                 type: ALLOWED_METHODS.ERASE_ELEMENT,
                 payload: { x1: clientX, y1: clientY },
               });
-              emitCanvasUpdate({
-                command: CANVAS_COMMANDS.ERASE_ELEMENT,
-                elements: [{ x1: clientX, y1: clientY }],
-                source: SOURCE_TYPES.LOCAL,
-                updatedBy: getLocalUserId(),
-              });
             }
             break;
           }
@@ -487,15 +292,12 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
       activeTool,
       ToolActionType,
       toolBoxState,
-      markLocalUpdate,
       record,
       dispatchBoardAction,
-      emitCanvasUpdate,
     ],
   );
 
   const handleMoveUp = useCallback(() => {
-    markLocalUpdate();
     if (ToolActionType === TOOL_ACTION_TYPE.WRITE) {
       return;
     }
@@ -552,19 +354,11 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
         type: ALLOWED_METHODS.DRAW_UP,
         payload: TOOL_ACTION_TYPE.NONE,
       });
-      emitCanvasUpdate({
-        command: CANVAS_COMMANDS.DRAW_UP,
-        elements: [],
-        source: SOURCE_TYPES.LOCAL,
-        updatedBy: getLocalUserId(),
-      });
     }
-  }, [ToolActionType, activeTool, markLocalUpdate, record, dispatchBoardAction, emitCanvasUpdate]);
+  }, [ToolActionType, activeTool, record, dispatchBoardAction]);
 
   const textAreaBlur = useCallback(
     (textValue) => {
-      markLocalUpdate();
-
       // Record text to history
       if (currentElementIdRef.current) {
         const finalElement = elementsRef.current.find((e) => e.id === currentElementIdRef.current);
@@ -584,72 +378,25 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
         type: ALLOWED_METHODS.SAVE_TEXT,
         payload: { text: textValue },
       });
-      emitCanvasUpdate({
-        command: CANVAS_COMMANDS.SAVE_TEXT,
-        elements: [],
-        source: SOURCE_TYPES.LOCAL,
-        updatedBy: getLocalUserId(),
-        payload: { text: textValue },
-      });
     },
-    [markLocalUpdate, record, dispatchBoardAction, emitCanvasUpdate],
+    [record, dispatchBoardAction],
   );
 
   // Undo - navigates history and applies patch
   const handleUndo = useCallback(() => {
-    markLocalUpdate();
-
     if (!canUndo) return;
-
-    // Get the element that will be undone (for broadcasting)
-    const currentNode = history.historySize > 0 ? elementsRef.current : null;
 
     // Execute undo in history (this sets lastPatch which triggers the useEffect above)
     historyUndo();
-
-    // Broadcast to other users (we'll get the elementId from the patch)
-    // Note: The actual patch application happens via the useEffect above
-  }, [canUndo, markLocalUpdate, historyUndo, history.historySize]);
+  }, [canUndo, historyUndo]);
 
   // Redo - navigates history and applies patch
   const handleRedo = useCallback(() => {
-    markLocalUpdate();
-
     if (!canRedo) return;
 
     // Execute redo in history (this sets lastPatch which triggers the useEffect above)
     historyRedo();
-  }, [canRedo, markLocalUpdate, historyRedo]);
-
-  // Broadcast undo/redo when lastPatch changes
-  useEffect(() => {
-    if (!lastPatch) return;
-
-    const userId = getLocalUserId();
-
-    if (lastPatch.action === 'undo') {
-      emitCanvasUpdate({
-        command: CANVAS_COMMANDS.UNDO,
-        elements: [],
-        source: SOURCE_TYPES.LOCAL,
-        updatedBy: userId,
-        payload: {
-          elementId: lastPatch.elementId,
-          userId: userId,
-        },
-      });
-    } else if (lastPatch.action === 'redo') {
-      emitCanvasUpdate({
-        command: CANVAS_COMMANDS.REDO,
-        elements: [],
-        source: SOURCE_TYPES.LOCAL,
-        updatedBy: userId,
-        payload: {
-          element: lastPatch.patch?.element,
-        },
-      });
-    }
-  }, [lastPatch, emitCanvasUpdate]);
+  }, [canRedo, historyRedo]);
 
   return {
     handleMouseDown,
@@ -660,9 +407,5 @@ export const useBoardHandlers = ({ canvasId, updateSourceRef }) => {
     handleRedo,
     canUndo,
     canRedo,
-    connectionState,
-    isInRoom,
-    joinCanvasRoom,
-    leaveCanvasRoom,
   };
 };

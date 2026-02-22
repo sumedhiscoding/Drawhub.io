@@ -234,31 +234,6 @@ const BoardReducer = (state, action) => {
       };
     }
 
-    // Remote operations - applied from socket updates
-    case ALLOWED_METHODS.REMOTE_UNDO: {
-      const { elementId } = action.payload;
-      if (!elementId) return state;
-
-      const newElements = elements.filter((e) => e.id !== elementId);
-      return {
-        ...state,
-        elements: newElements,
-      };
-    }
-
-    case ALLOWED_METHODS.REMOTE_REDO: {
-      const { element } = action.payload;
-      if (!element || !element.id) return state;
-
-      // Don't add if element already exists
-      if (elements.some((e) => e.id === element.id)) return state;
-
-      return {
-        ...state,
-        elements: [...elements, element],
-      };
-    }
-
     /**
      * Apply a patch from undo/redo
      * Patch shape:

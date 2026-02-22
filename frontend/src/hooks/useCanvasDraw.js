@@ -6,7 +6,7 @@ import { TOOLS } from '../utils/constants';
  * Custom hook to handle canvas drawing/rendering
  * Optimized for performance with proper context state management
  */
-export const useCanvasDraw = (canvasRef, elements, updateSourceRef) => {
+export const useCanvasDraw = (canvasRef, elements) => {
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -38,5 +38,5 @@ export const useCanvasDraw = (canvasRef, elements, updateSourceRef) => {
         rc.draw(element.roughElement);
       }
     });
-  }, [elements, canvasRef, updateSourceRef]);
+  }, [elements, canvasRef]);
 };

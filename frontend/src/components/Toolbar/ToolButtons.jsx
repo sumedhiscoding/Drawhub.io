@@ -6,7 +6,6 @@ import { CanvasActionsContext } from '../../store/Context/CanvasActionContext';
 
 /**
  * Component for rendering toolbar action buttons (Undo, Redo) and tool selection buttons
- * Uses socket-aware undo/redo handlers from CanvasActionsContext for collaborative editing
  * Undo/Redo is powered by XState history machine
  */
 const ToolButtons = () => {

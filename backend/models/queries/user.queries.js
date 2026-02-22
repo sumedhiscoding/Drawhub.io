@@ -89,3 +89,8 @@ export const searchUsers = (searchTerm, from = 0, to = 10) => sql`
   LIMIT ${to - from}
   OFFSET ${from}
 `;
+
+export const deleteAllUsers = () => sql`
+  DELETE FROM users
+  RETURNING id, email, name
+`;
