@@ -41,7 +41,6 @@ export const useCanvasRoom = () => {
         // Only join if there's an active live session
         if (response.data.isLive) {
           if (!socket.connected) {
-            console.warn('⚠️ Socket not connected, cannot join room yet');
             hasJoinedRef.current = false;
             return;
           }
@@ -51,18 +50,16 @@ export const useCanvasRoom = () => {
             socket.auth = { token };
           }
 
-          console.log(`🔄 Joining live session for canvas: ${canvasId}`);
           // Join canvas room for live session
           socket.emit('join-canvas', canvasId);
           hasJoinedRef.current = true;
 
           // Optional: Listen for join confirmation
-          const handleJoined = (data) => {
-            console.log(`✅ Joined live session for canvas: ${data.canvasId}`, data);
+          const handleJoined = () => {
+            // Joined successfully
           };
 
-          const handleError = (error) => {
-            console.error('❌ Canvas room error:', error);
+          const handleError = () => {
             hasJoinedRef.current = false;
           };
 
@@ -80,7 +77,6 @@ export const useCanvasRoom = () => {
         }
       } catch (error) {
         // Silently fail - don't block if check fails
-        console.warn('Error checking live session status:', error);
         hasJoinedRef.current = false;
       } finally {
         isCheckingRef = false;

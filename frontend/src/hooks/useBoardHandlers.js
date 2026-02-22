@@ -75,17 +75,9 @@ export const useBoardHandlers = () => {
             userId: change.userId || getLocalUserId(),
             timestamp: change.timestamp || Date.now(),
           };
-          // Reduced logging for performance - only log occasionally
-          const label = change._label || 'element';
-          if (Math.random() < 0.1) { // Log 10% of the time
-            console.log(`📤 Emitting element-update (${label}):`, {
-              elementId: changeToEmit.elementId,
-              type: changeToEmit.type,
-            });
-          }
           socket.emit('element-update', changeToEmit);
         } catch (error) {
-          console.warn('Sync failed (non-blocking):', error);
+          // Silently fail
         }
       }
     },
@@ -149,7 +141,7 @@ export const useBoardHandlers = () => {
           throttledPencilSync({ ...change, _label: 'pencil' });
         }
       } catch (error) {
-        console.warn('Pencil sync after batch failed (non-blocking):', error);
+        // Silently fail
       }
     }, 0);
   }, [socket, currentElementIdRef, getCurrentElement, throttledPencilSync]);
@@ -303,7 +295,7 @@ export const useBoardHandlers = () => {
                   throttledSync(change);
                 }
               } catch (error) {
-                console.warn('Shape sync failed (non-blocking):', error);
+                // Silently fail
               }
             }, 0);
           }

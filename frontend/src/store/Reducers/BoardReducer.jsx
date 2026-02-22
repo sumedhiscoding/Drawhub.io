@@ -267,10 +267,6 @@ const BoardReducer = (state, action) => {
       if (existingElement) {
         // Element already exists (created from UPDATE), merge with ADD data
         // ADD has the complete element, so use it but preserve any updates that might have arrived
-        console.log('⚠️ ADD received for existing element, merging...', {
-          elementId: action.payload.elementId,
-        });
-        
         const mergedElement = {
           ...action.payload.element,
           id: action.payload.elementId,
@@ -300,11 +296,6 @@ const BoardReducer = (state, action) => {
         roughElement: createTool(...getToolParams(action.payload.element)),
       };
       
-      console.log('✅ Reducer: Adding new element', {
-        elementId: newElement.id,
-        type: newElement.type,
-      });
-      
       return { ...state, elements: [...elements, newElement] };
     }
     case REALTIME_CHANGE_TYPES.UPDATE: {
@@ -313,12 +304,6 @@ const BoardReducer = (state, action) => {
       
       // If element doesn't exist, create it from the updates (handles UPDATE arriving before ADD)
       if (!existingElement) {
-        console.log('⚠️ Element not found for UPDATE, creating from updates', {
-          elementId: action.payload.elementId,
-          hasPoints: !!updates.points,
-          hasX2Y2: !!(updates.x2 !== undefined && updates.y2 !== undefined),
-        });
-
         // Determine element type from updates
         // If updates has points, it's a pencil element
         if (updates.points && Array.isArray(updates.points) && updates.points.length > 0) {
@@ -412,16 +397,9 @@ const BoardReducer = (state, action) => {
           return { ...state, elements: [...elements, newElement] };
         } else if (updates.x2 !== undefined && updates.y2 !== undefined) {
           // Shape update without type - wait for ADD
-          console.warn('⚠️ UPDATE for shape element received before ADD - cannot create without type. Waiting for ADD...', {
-            elementId: action.payload.elementId,
-          });
           return state;
         } else {
           // Unknown type, skip
-          console.warn('⚠️ UPDATE received but cannot determine element type from updates', {
-            elementId: action.payload.elementId,
-            updates: Object.keys(updates),
-          });
           return state;
         }
       }

@@ -23,7 +23,7 @@ export const useCanvasUpdate = (canvasId, elements, isInitialLoad) => {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await axios.put(
+      await axios.put(
         `${import.meta.env.VITE_API_URL}/canvas/update/${canvasId}`,
         payload,
         {
@@ -32,9 +32,8 @@ export const useCanvasUpdate = (canvasId, elements, isInitialLoad) => {
           },
         },
       );
-      console.log('Canvas persisted to database:', response);
     } catch (error) {
-      console.error('Error updating canvas:', error);
+      // Silently fail
     }
   }, [canvasId, elements, isInitialLoad]);
 
