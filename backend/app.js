@@ -23,6 +23,8 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
+console.log('process.env.FRONTEND_URL', process.env.FRONTEND_URL );
+
 app.use(cors(corsOptions));
 app.use(helmet());
 app.use(express.json({ limit: '50mb' })); // Increase from default 100kb to 50mb
