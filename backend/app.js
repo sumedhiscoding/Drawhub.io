@@ -30,7 +30,7 @@ app.use(helmet());
 app.use(express.json({ limit: '50mb' })); // Increase from default 100kb to 50mb
 app.use(express.urlencoded({ extended: false, limit: '50mb' })); // Also increase urlencoded limit
 
-app.options('*', cors(corsOptions));
+
 
 // Routes
 app.use('/auth', auth);
