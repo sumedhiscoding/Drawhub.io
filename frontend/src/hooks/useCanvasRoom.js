@@ -3,6 +3,7 @@ import { useParams } from 'react-router';
 import { useContext } from 'react';
 import { SocketContext } from '../store/Context/SocketContext';
 import axios from 'axios';
+import apiConfig from '@/config/api';
 
 /**
  * Hook to manage canvas room joining/leaving for live sessions
@@ -30,7 +31,7 @@ export const useCanvasRoom = () => {
 
         // Check live session status
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/canvas/live/status/${canvasId}`,
+          `${apiConfig.apiUrl}/canvas/live/status/${canvasId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

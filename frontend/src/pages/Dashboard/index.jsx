@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import axios from 'axios';
 import { Plus, LogOut, PenTool, Share2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import apiConfig from '@/config/api';
 
 const Dashboard = () => {
   const [canvases, setCanvases] = useState([]);
@@ -36,7 +37,7 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/canvas/get-all-by-owner-id`,
+        `${apiConfig.apiUrl}/canvas/get-all-by-owner-id`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -56,7 +57,7 @@ const Dashboard = () => {
       setLoadingShared(true);
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/canvas/get-all-by-shared-with-ids`,
+        `${apiConfig.apiUrl}/canvas/get-all-by-shared-with-ids`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -75,7 +76,7 @@ const Dashboard = () => {
     try {
       console.log('canvas id', id);
       const token = localStorage.getItem('token');
-      const response = await axios.delete(`${import.meta.env.VITE_API_URL}/canvas/delete/${id}`, {
+      const response = await axios.delete(`${apiConfig.apiUrl}/canvas/delete/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -99,7 +100,7 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/canvas/create`,
+        `${apiConfig.apiUrl}/canvas/create`,
         {
           name: newCanvasName.trim(),
         },

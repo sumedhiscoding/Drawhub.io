@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import axios from 'axios';
 import { PenTool } from 'lucide-react';
+import apiConfig from '@/config/api';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -34,7 +35,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, {
+      const response = await axios.post(`${apiConfig.apiUrl}/auth/register`, {
         name,
         email,
         password,

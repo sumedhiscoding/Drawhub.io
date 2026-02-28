@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useParams } from 'react-router';
 import axios from 'axios';
 import { toast } from 'sonner';
+import apiConfig from '@/config/api';
 
 /**
  * Hook for managing live sessions
@@ -31,7 +32,7 @@ export const useLiveSession = () => {
       }
 
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/canvas/live/status/${canvasId}`,
+        `${apiConfig.apiUrl}/canvas/live/status/${canvasId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -71,7 +72,7 @@ export const useLiveSession = () => {
       }
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/canvas/live/start/${canvasId}`,
+        `${apiConfig.apiUrl}/canvas/live/start/${canvasId}`,
         {},
         {
           headers: {
@@ -123,7 +124,7 @@ export const useLiveSession = () => {
       }
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/canvas/live/stop/${canvasId}`,
+        `${apiConfig.apiUrl}/canvas/live/stop/${canvasId}`,
         {},
         {
           headers: {

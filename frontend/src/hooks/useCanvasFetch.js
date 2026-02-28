@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import axios from 'axios';
 import { ALLOWED_METHODS } from '../utils/constants';
 import { createTool } from '../utils/helpers';
+import apiConfig from '@/config/api';
 /**
  * Custom hook to fetch canvas data from the API
  * Returns isInitialLoad ref and canvas data
@@ -15,7 +16,7 @@ export const useCanvasFetch = (canvasId, dispatchBoardAction, canvasDataRef) => 
 
       const token = localStorage.getItem('token');
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/canvas/get/${canvasId}`, {
+        const response = await axios.get(`${apiConfig.apiUrl}/canvas/get/${canvasId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
