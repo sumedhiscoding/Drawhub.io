@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
+import apiConfig from '@/config/api';
 
 /**
  * Custom hook to update canvas data with debouncing
@@ -24,7 +25,7 @@ export const useCanvasUpdate = (canvasId, elements, isInitialLoad) => {
 
     try {
       await axios.put(
-        `${import.meta.env.VITE_API_URL}/canvas/update/${canvasId}`,
+        `${apiConfig.apiUrl}/canvas/update/${canvasId}`,
         payload,
         {
           headers: {

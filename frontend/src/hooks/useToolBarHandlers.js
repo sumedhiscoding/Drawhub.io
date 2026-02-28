@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import apiConfig from '@/config/api';
 
 /**
  * Custom hook for managing canvas sharing functionality
@@ -78,7 +79,7 @@ export const useToolBarHandlers = (canvasId) => {
       }
 
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/canvas/shared-users/${canvasId}`,
+        `${apiConfig.apiUrl}/canvas/shared-users/${canvasId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -141,7 +142,7 @@ export const useToolBarHandlers = (canvasId) => {
       // Share with all emails
       const sharePromises = uniqueEmails.map((email) =>
         axios.post(
-          `${import.meta.env.VITE_API_URL}/canvas/share/${canvasId}`,
+          `${apiConfig.apiUrl}/canvas/share/${canvasId}`,
           { email },
           {
             headers: {
@@ -190,7 +191,7 @@ export const useToolBarHandlers = (canvasId) => {
           return;
         }
 
-        await axios.delete(`${import.meta.env.VITE_API_URL}/canvas/remove-access/${canvasId}`, {
+        await axios.delete(`${apiConfig.apiUrl}/canvas/remove-access/${canvasId}`, {
           data: { userId },
           headers: {
             Authorization: `Bearer ${token}`,

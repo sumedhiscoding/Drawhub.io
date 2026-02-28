@@ -1,6 +1,7 @@
 import React, { useEffect, useReducer } from 'react';
 import { io } from 'socket.io-client';
 import { SocketContext } from '../Context/SocketContext';
+import apiConfig from '@/config/api';
 
 // Socket reducer
 const socketReducer = (state, action) => {
@@ -33,7 +34,7 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     // Initialize socket connection with non-blocking configuration
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL;
+    const socketUrl = apiConfig.socketUrl;
     const token = localStorage.getItem('token');
     
     const socket = io(socketUrl, {

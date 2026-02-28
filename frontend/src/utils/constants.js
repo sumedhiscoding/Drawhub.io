@@ -143,3 +143,6 @@ export const CHANGE_SOURCES = {
   LOCAL: 'LOCAL',
   REMOTE: 'REMOTE',
 };
+
+// Flag to mark undo/redo operations in change objects
+export const UNDO_REDO_FLAG = 'isUndoRedo';

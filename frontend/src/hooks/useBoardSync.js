@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useContext } from 'react';
 import { BoardContext } from '../store/Context/BoardContext';
-import { REALTIME_CHANGE_TYPES, CHANGE_SOURCES, ALLOWED_METHODS } from '../utils/constants';
+import { REALTIME_CHANGE_TYPES, CHANGE_SOURCES, ALLOWED_METHODS, UNDO_REDO_FLAG } from '../utils/constants';
 import { getLocalUserId } from '../utils/helpers';
 import { useThrottledSync } from './useThrottledSync';
 
@@ -37,6 +37,9 @@ export const useBoardSync = ({ socket }) => {
 
   const applyChange = useCallback(
     (change, isRemote = false, throttle = false) => {
+      // Check if this is an undo/redo operation
+      const isUndoRedo = change[UNDO_REDO_FLAG] === true;
+
       // CRITICAL: Dispatch to reducer FIRST - this is what makes drawing work
       // This must never wait for socket operations
       // For remote changes, dispatch immediately and synchronously
@@ -51,7 +54,12 @@ export const useBoardSync = ({ socket }) => {
 
       // Sync is secondary - completely async and fire-and-forget
       // Never block drawing on sync operations
-      if (!isRemote && socket?.connected) {
+      // 
+      // For undo/redo operations:
+      // - Local undo/redo: Already synced in useHistorySync, don't sync again here
+      // - Remote undo/redo: Don't sync back (isRemote=true prevents this)
+      // - Regular changes: Sync normally if local
+      if (!isRemote && !isUndoRedo && socket?.connected) {
         // Use setTimeout to ensure sync is completely async
         // This ensures reducer dispatch happens immediately
         setTimeout(() => {
@@ -101,6 +109,11 @@ export const useBoardSync = ({ socket }) => {
       if (change.userId !== getLocalUserId()) {
         // Apply immediately - don't batch or delay
         // This is critical for smooth real-time updates
+        // 
+        // For remote undo/redo changes:
+        // - Apply the change to board state (via applyChange with isRemote=true)
+        // - Do NOT record to history (isRemote=true prevents history recording)
+        // - Do NOT sync back (isRemote=true prevents sync)
         applyChange(change, true);
       }
     };
